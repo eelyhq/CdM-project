@@ -1,0 +1,22 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "Compile CdM-16",
+			"type": "cocas",
+			"target": "cdm16",
+			"sources": [
+				"/home/eely/Documents/vs code/main.asm"
+			],
+			"artifacts": {
+				"image": "${workspaceFolder}${/}build${/}out.img",
+				"debug": "${workspaceFolder}${/}build${/}out.dbg.json"
+			},
+			"problemMatcher": [],
+			"group": {
+				"kind": "build",
+				"isDefault": true
+			}
+		}
+	]
+}
