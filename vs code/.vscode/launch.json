@@ -7,7 +7,7 @@
             "address": "ws://localhost:7001",
             "target": "cdm16",
             "architecture": "vonNeumann",
-            "environment": "emulator",
+            "environment": "external",
             "artifacts": {
                 "image": "${workspaceFolder}${/}build${/}out.img",
                 "debug": "${workspaceFolder}${/}build${/}out.dbg.json"

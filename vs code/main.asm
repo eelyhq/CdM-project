@@ -1,16 +1,22 @@
 asect 0
-main: ext               
-default_handler: ext    
+main: ext               # Declare labels
+default_handler: ext    # as external
 
-# Убрали ", 0" чтобы каждый вектор занимал ровно 1 слово (2 байта)
-dc main                 # 0x00: Startup/Reset vector
-dc default_handler      # 0x02: Unaligned SP
-dc default_handler      # 0x04: Unaligned PC
-dc default_handler      # 0x06: Invalid instruction
-dc default_handler      # 0x08: Double fault
-align 0x80              
+# Interrupt vector table (IVT)
+# Place a vector to program start and map 
+# all internal exceptions to default_handler
+dc main, 0              # Startup/Reset vector
+dc default_handler, 0   # Unaligned SP
+dc default_handler, 0   # Unaligned PC
+dc default_handler, 0   # Invalid instruction
+dc default_handler, 0   # Double fault
+align 0x80              # Reserve space for the rest 
+                        # of IVT
 
+# Exception handlers section
 rsect exc_handlers
+
+# This handler halts processor
 default_handler>
     halt
 
@@ -27,10 +33,11 @@ ships_array>
     dc 1
     dc 1
 
+# Main program section
 rsect main
-main>
 
-br start
+main>
+    br start
 
 get_cell_index:
     # 1. ПРОЛОГ (Сохраняем регистры)
@@ -39,14 +46,14 @@ get_cell_index:
     push r3 
 
     # 2. ТЕЛО ФУНКЦИИ
-    # Нам нужно умножить Y (r1) на 10. Умножения нет, делаем через сдвиги: Y*8 + Y*2
-    shl r1, r2, 3    # r2 = Y * 8  (сдвиг влево на 3 бита)
-    shl r1, r3, 1    # r3 = Y * 2  (сдвиг влево на 1 бит)
+    # Нам нужно умножить Y (r6) на 10. Умножения нет, делаем через сдвиги: Y*8 + Y*2
+    shl r2, r7, 3    # r7 = Y * 8  (сдвиг влево на 3 бита)
+    shl r2, r3, 1    # r3 = Y * 2  (сдвиг влево на 1 бит)
     
-    add r2, r3, r2   # r2 = (Y * 8) + (Y * 2) = Y * 10
+    add r7, r3, r7   # r2 = (Y * 8) + (Y * 2) = Y * 10
     
     # Теперь прибавляем X (r0)
-    add r2, r0, r2   # r2 = Y * 10 + X
+    add r7, r0, r7   # r2 = Y * 10 + X
 
     # 3. ЭПИЛОГ (Восстанавливаем регистры)
     # Достаем r3 из стека. Теперь r3 такой же, каким был до вызова функции!
@@ -56,6 +63,9 @@ get_cell_index:
     rts              # Возвращаемся туда, откуда вызвали эту функцию
 
 start:
+    ldi r0, 0x7000   # 1. Загружаем нужный адрес в обычный регистр r0
+    stsp r0          # 2. Специальной командой переносим значение из r0 в sp 
+
     ldi r0, 0x8004  # ИСТОЧНИК ДАННЫХ: Клавиатура (Адрес 8004)
     ldi r1, 0x8005  # ИСТОЧНИК СТАТУСА: Клавиатура avail (Адрес 8)
     ldi r4, 0x8000  # ПРИЕМНИК: Экран TTY 1 (Адрес 8000)
@@ -145,6 +155,9 @@ loop_clear_enemy:
 
     ldi r7, 1
 
+    # ldi r5, 0
+    # ldi r6, 0
+
     and r7, r4, r4
     tst r4
     bz horizontal
@@ -155,74 +168,585 @@ loop_clear_enemy:
     vertical:
     ldw r1, r4 # загружаем в регистр 4 размер корабля
 
-    ldi r0, 0x3000     
+      
     # проверка, выйдет ли корабль за пределы поля
-    move r6, r2 # скопировали начальную точку
+    
     # move r4, r6  #скопировали размер корабля
 
     check_vert:
+    move r6, r2 # скопировали начальную точку
+
     ldi r7, 10
     add r2, r4, r2
     cmp r2, r7
     bge rand #значит вышли за пределы
  
     # не вышли за предел
+    # ДЛЯ ПОЛУЧЕНИЯ НОМЕРА КЛЕТКИ НУЖНО MOVE X -> r0, Y -> r2. РЕЗУЛЬТАТ В r7
 
-    # проверка клетки справа
+    # проверка самой клетки---------
+    move r5, r0
+    move r6, r2
+    jsr get_cell_index
+
+    ldi r0, 0x3000
+    add r0, r7, r0
+    ldb r0, r7
+    tst r7
+    bnz rand
+    #-------------------------------
+
+    # проверка клетки справа--------
+    # проверка на край
+    ldi r7, 9
+    cmp r5, r7
+    beq next1
+    #-----------------
+
     ldi r7, 1
 
-    add r5, r7, r2 # x + 1 -> r2
-    move r6, r7 # y -> r7
+    add r5, r7, r0 # x + 1 -> r0
+    move r6, r2 # y -> r2
     
-    jsr get_cell_index     
+    jsr get_cell_index # r7 - клетка справа    
+    
+    ldi r0, 0x3000
+    add r0, r7, r0
+    ldb r0, r7
+    tst r7 
+    bnz rand
+    #-------------------------------- 
+
+    next1:
+
+    # проверка клетки слева--------
+    # проверка на край
+    ldi r7, 0
+    cmp r5, r7
+    beq next2
+    #-----------------
+
+    ldi r7, 1
+
+    sub r5, r7, r0 # x - 1 -> r0
+    move r6, r2 # y -> r2
+    
+    jsr get_cell_index # r7 - клетка слева  
+
+    ldi r0, 0x3000
+    add r0, r7, r0
+    ldb r0, r7
+    tst r7 
+    bnz rand
+    #-------------------------------- 
+
+    next2:
+
+    # проверка клетки сверху--------
+    # проверка на край
+    ldi r7, 0
+    cmp r6, r7
+    beq next3
+    #-----------------
+
+    ldi r7, 1
+
+    sub r6, r7, r2 # y - 1 -> r2
+    move r5, r0 # x -> r3
+    
+    jsr get_cell_index # r7 - клетка сверху  
+    
+    ldi r0, 0x3000
+    add r0, r7, r0
+    ldb r0, r7
+    tst r7 
+    bnz rand
+    #-------------------------------- 
+
+    next3:
+
+    # проверка клетки снизу--------
+    # проверка на край
+    ldi r7, 9
+    cmp r6, r7
+    beq next4
+    #-----------------
+
+    ldi r7, 1
+
+    add r6, r7, r2 # y + 1 -> r2
+    move r5, r0 # x -> r3
+    
+    jsr get_cell_index # r7 - клетка снизу 
+    
+    ldi r0, 0x3000
+    add r0, r7, r0
+    ldb r0, r7
+    tst r7 
+    bnz rand
+    #-------------------------------- 
+
+    next4:
+
+    # проверка клетки справа сверху--------
+    # проверка на край
+    ldi r7, 9
+    cmp r5, r7
+    beq next5
+    ldi r7, 0
+    cmp r6, r7
+    beq next5
+    #-----------------
+
+    ldi r7, 1
+
+    add r5, r7, r0 # x + 1 -> r0
+    sub r6, r7, r2 # y - 1-> r2
+    
+    jsr get_cell_index # r7 - клетка справа    
+    
+    ldi r0, 0x3000
+    add r0, r7, r0
+    ldb r0, r7
+    tst r7 
+    bnz rand
+    #-------------------------------- 
+
+    next5:
+
+    # проверка клетки слева сверху--------
+    # проверка на край
+    ldi r7, 0
+    cmp r5, r7
+    beq next6
+    cmp r6, r7
+    beq next6
+    #-----------------
+
+    ldi r7, 1
+
+    sub r5, r7, r0 # x - 1 -> r0
+    sub r6, r7, r2 # y - 1 -> r2
+    
+    jsr get_cell_index # r7 - клетка справа    
+
+    ldi r0, 0x3000
+    add r0, r7, r0
+    ldb r0, r7
+    tst r7 
+    bnz rand
+    #-------------------------------- 
+
+    next6:
+
+    # проверка клетки справа снизу--------
+    # проверка на край
+    ldi r7, 9
+    cmp r5, r7
+    beq next7
+    cmp r6, r7
+    beq next7
+    #-----------------
+
+    ldi r7, 1
+
+    add r5, r7, r0 # x + 1 -> r0
+    add r6, r7, r2 # y + 1-> r2
+    
+    jsr get_cell_index # r7 - клетка справа    
+    
+    ldi r0, 0x3000
+    add r0, r7, r0
+    ldb r0, r7
+    tst r7 
+    bnz rand
+    #-------------------------------- 
+
+    next7:
+
+    # проверка клетки слева снизу--------
+    # проверка на край
+    ldi r7, 0
+    cmp r5, r7
+    beq next8
+    ldi r7, 9
+    cmp r6, r7
+    beq next8
+    #-----------------
+
+    ldi r7, 1
+
+    sub r5, r7, r0 # x - 1 -> r0
+    add r6, r7, r2 # y + 1 -> r2
+    
+    jsr get_cell_index # r7 - клетка справа    
+
+    ldi r0, 0x3000
+    add r0, r7, r0
+    ldb r0, r7
+    tst r7 
+    bnz rand
+    #-------------------------------- 
+
+    next8:
+    dec r4
+
+    tst r4
+    
+    bz place_ship
+
+    inc r6
+    br check_vert
+
+    place_ship:
+
+    ldw r1, r4
+    inc r6
+    sub r6, r4, r6 # вернули начальную координату y
 
 
-    add r0, r2, r7 # в r7 адрес начала поля
-    ldb r7, r6 # в r6 значение поля
-    tst r6 # проверка текущей
-    bnz rand #клетка занята 
+    place:
+    move r5, r0
+    move r6, r2
+    tst r4
+
+    bz done
+    
+    jsr get_cell_index
+
+    ldi r0, 0x3000
+
+    add r7, r0, r7
 
     ldi r0, 1
-    tst r7 # проверка текущей
-    bnz rand #клетка занята 
+    stb r7, r0
 
-    ldi r7, 10
-    add r2, r7, r2 # переход к след. клетке 
+    dec r4
+    inc r6
+    br place
+
+    done:
+
+    dec r3
+    inc r1
+    inc r1
+    br rand
+
 #------------------------------
 
     horizontal:
     ldw r1, r4 # загружаем в регистр 4 размер корабля
 
+      
+    # проверка, выйдет ли корабль за пределы поля
+    
+    # move r4, r6  #скопировали размер корабля
 
-    add r1, 2 
+    check_horizont:
+    move r5, r2 # скопировали начальную точку
+
+    ldi r7, 10
+    add r2, r4, r2
+    cmp r2, r7
+    bge rand #значит вышли за пределы
+ 
+    # не вышли за предел
+    # ДЛЯ ПОЛУЧЕНИЯ НОМЕРА КЛЕТКИ НУЖНО MOVE X -> r0, Y -> r2. РЕЗУЛЬТАТ В r7
+
+    # проверка самой клетки---------
+    move r5, r0
+    move r6, r2
+    jsr get_cell_index
+
+    ldi r0, 0x3000
+    add r0, r7, r0
+    ldb r0, r7
+    tst r7
+    bnz rand
+    #-------------------------------
+
+    # проверка клетки справа--------
+    # проверка на край
+    ldi r7, 9
+    cmp r5, r7
+    beq next9
+    #-----------------
+
+    ldi r7, 1
+
+    add r5, r7, r0 # x + 1 -> r0
+    move r6, r2 # y -> r2
+    
+    jsr get_cell_index # r7 - клетка справа    
+    
+    ldi r0, 0x3000
+    add r0, r7, r0
+    ldb r0, r7
+    tst r7 
+    bnz rand
+    #-------------------------------- 
+
+    next9:
+
+    # проверка клетки слева--------
+    # проверка на край
+    ldi r7, 0
+    cmp r5, r7
+    beq next10
+    #-----------------
+
+    ldi r7, 1
+
+    sub r5, r7, r0 # x - 1 -> r0
+    move r6, r2 # y -> r2
+    
+    jsr get_cell_index # r7 - клетка слева  
+
+    ldi r0, 0x3000
+    add r0, r7, r0
+    ldb r0, r7
+    tst r7 
+    bnz rand
+    #-------------------------------- 
+
+    next10:
+
+    # проверка клетки сверху--------
+    # проверка на край
+    ldi r7, 0
+    cmp r6, r7
+    beq next11
+    #-----------------
+
+    ldi r7, 1
+
+    sub r6, r7, r2 # y - 1 -> r2
+    move r5, r0 # x -> r3
+    
+    jsr get_cell_index # r7 - клетка сверху  
+    
+    ldi r0, 0x3000
+    add r0, r7, r0
+    ldb r0, r7
+    tst r7 
+    bnz rand
+    #-------------------------------- 
+
+    next11:
+
+    # проверка клетки снизу--------
+    # проверка на край
+    ldi r7, 9
+    cmp r6, r7
+    beq next12
+    #-----------------
+
+    ldi r7, 1
+
+    add r6, r7, r2 # y + 1 -> r2
+    move r5, r0 # x -> r3
+    
+    jsr get_cell_index # r7 - клетка снизу 
+    
+    ldi r0, 0x3000
+    add r0, r7, r0
+    ldb r0, r7
+    tst r7 
+    bnz rand
+    #-------------------------------- 
+
+    next12:
+
+    # проверка клетки справа сверху--------
+    # проверка на край
+    ldi r7, 9
+    cmp r5, r7
+    beq next13
+    ldi r7, 0
+    cmp r6, r7
+    beq next13
+    #-----------------
+
+    ldi r7, 1
+
+    add r5, r7, r0 # x + 1 -> r0
+    sub r6, r7, r2 # y - 1-> r2
+    
+    jsr get_cell_index # r7 - клетка справа    
+    
+    ldi r0, 0x3000
+    add r0, r7, r0
+    ldb r0, r7
+    tst r7 
+    bnz rand
+    #-------------------------------- 
+
+    next13:
+
+    # проверка клетки слева сверху--------
+    # проверка на край
+    ldi r7, 0
+    cmp r5, r7
+    beq next14
+    cmp r6, r7
+    beq next14
+    #-----------------
+
+    ldi r7, 1
+
+    sub r5, r7, r0 # x - 1 -> r0
+    sub r6, r7, r2 # y - 1 -> r2
+    
+    jsr get_cell_index # r7 - клетка справа    
+
+    ldi r0, 0x3000
+    add r0, r7, r0
+    ldb r0, r7
+    tst r7 
+    bnz rand
+    #-------------------------------- 
+
+    next14:
+
+    # проверка клетки справа снизу--------
+    # проверка на край
+    ldi r7, 9
+    cmp r5, r7
+    beq next15
+    cmp r6, r7
+    beq next15
+    #-----------------
+
+    ldi r7, 1
+
+    add r5, r7, r0 # x + 1 -> r0
+    add r6, r7, r2 # y + 1-> r2
+    
+    jsr get_cell_index # r7 - клетка справа    
+    
+    ldi r0, 0x3000
+    add r0, r7, r0
+    ldb r0, r7
+    tst r7 
+    bnz rand
+    #-------------------------------- 
+
+    next15:
+
+    # проверка клетки слева снизу--------
+    # проверка на край
+    ldi r7, 0
+    cmp r5, r7
+    beq next16
+    ldi r7, 9
+    cmp r6, r7
+    beq next16
+    #-----------------
+
+    ldi r7, 1
+
+    sub r5, r7, r0 # x - 1 -> r0
+    add r6, r7, r2 # y + 1 -> r2
+    
+    jsr get_cell_index # r7 - клетка справа    
+
+    ldi r0, 0x3000
+    add r0, r7, r0
+    ldb r0, r7
+    tst r7 
+    bnz rand
+    #-------------------------------- 
+
+    next16:
+
+    dec r4
+
+    tst r4
+    
+    bz place_ship_hor
+
+    inc r5
+    br check_horizont
+
+    place_ship_hor:
+
+    ldw r1, r4
+    inc r5
+    sub r5, r4, r5 # вернули начальную координату x
+
+
+    place_hor:
+    move r5, r0
+    move r6, r2
+    tst r4
+
+    bz done_hor
+    
+    jsr get_cell_index
+
+    ldi r0, 0x3000
+
+    add r7, r0, r7
+
+    ldi r0, 1
+    stb r7, r0
+
+    dec r4
+    inc r5
+    br place_hor
+
+    done_hor:
+
     dec r3
-
-
+    inc r1
+    inc r1
     br rand
-
-    exit:
+    
 #-----------------------------------------------
-
+exit:
 # РИСОВАНИЕ ДВУХ ПОЛЕЙ--------------------------
-    # ldi r5, 10 # для рисования звезд в одной полосе
-    # ldi r6, 10 # звезды в рядах
-    # ldi r7, 42 # аски звезды
-    # ldi r3, 10 # аски перевода строк
-    # ldi r0, 32 # аски для пробела
-    # ldi r2, 2  # чтобы вывести на 2 монитора поле
 
-    # print_row:
-    #     print_coloumn:
-    #     stb r4, r7
-    #     stb r4, r0
-    #     dec r5
-    #     tst r5
-    #     bnz print_coloumn
-    # ldi r5, 10 # для рисования звезд в одной полосе
-    # stb r4, r3
-    # dec r6
-    # tst r6
-    # bnz print_row
+    ldi r4, 0x8000  # ПРИЕМНИК: Экран TTY 1 (Адрес 8000)
+        
+    ldi r5, 10 # для рисования звезд в одной полосе
+    ldi r6, 10 # звезды в рядах
+    ldi r7, 42 # аски звезды
+    ldi r3, 10 # аски перевода строк
+    ldi r0, 32 # аски для пробела
+    ldi r2, 2  # чтобы вывести на 2 монитора поле
+    
+    ldi r1, 0x2fff
+    print_row:
+        print_coloumn:
+        inc r1
+        
+        
+        ldb r1, r7
+
+        
+
+        tst r7 
+
+        beq print_star
+
+        print_hash:
+        ldi r7, 35 # аски решетки
+        br print
+
+        print_star:
+        ldi r7, 46 # аски звезды
+
+        print:
+        stb r4, r7
+        stb r4, r0
+        dec r5
+        tst r5
+        bnz print_coloumn
+    ldi r5, 10 # для рисования звезд в одной полосе
+    stb r4, r3
+    dec r6
+    tst r6
+    bnz print_row
     
     # ldi r4, 0x8002
     # ldi r5, 10 
@@ -247,5 +771,6 @@ loop_clear_enemy:
 
 
 end.
+
 
 

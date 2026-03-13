@@ -6,7 +6,7 @@
 			"type": "cocas",
 			"target": "cdm16",
 			"sources": [
-				"/home/eely/Documents/vs code/main.asm"
+				"/home/eely/Documents/cdm/vs code/main.asm"
 			],
 			"artifacts": {
 				"image": "${workspaceFolder}${/}build${/}out.img",
