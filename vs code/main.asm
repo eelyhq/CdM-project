@@ -20,7 +20,11 @@ rsect exc_handlers
 default_handler>
     halt
 
-asect 0x0fa0  # массив с надписью Ship generation..
+asect 0x0e00  # массив с надписью Place your -deck ship
+place_array>
+    dc "Place your -deck ship", 0
+
+asect 0x0fa0  # массив с полями бота
 matrix_adresses>
     dc 0x8020
     dc 0x8022
@@ -35,24 +39,24 @@ matrix_adresses>
 
 asect 0x0fff  # массив с надписью Ship generation..
 gen_array>
-    dc 83
-    dc 104
-    dc 105
-    dc 112
-    dc 32
-    dc 103
-    dc 101
-    dc 110
-    dc 101
-    dc 114
-    dc 97
-    dc 116
-    dc 105
-    dc 111
-    dc 110
-    dc 46
-    dc 46
-    dc 46
+    dc "Ship generation.."
+    # dc 104
+    # dc 105
+    # dc 112
+    # dc 32
+    # dc 103
+    # dc 101
+    # dc 110
+    # dc 101
+    # dc 114
+    # dc 97
+    # dc 116
+    # dc 105
+    # dc 111
+    # dc 110
+    # dc 46
+    # dc 46
+    # dc 46
 
 asect 0x10f0  # массив с размерами кораблей
 ships_array>
@@ -106,8 +110,8 @@ start:
     ldi r1, gen_array
     ldi r3, 18
     write:
-    ldw r1, r2
-    stb r0, r2
+    ldw  r1, r2
+    stw r0, r2
     inc r1
     inc r1
     dec r3
