@@ -110,9 +110,8 @@ start:
     ldi r1, gen_array
     ldi r3, 18
     write:
-    ldw  r1, r2
-    stw r0, r2
-    inc r1
+    ldb  r1, r2
+    stb r0, r2
     inc r1
     dec r3
     tst r3
