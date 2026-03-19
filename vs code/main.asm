@@ -24,6 +24,9 @@ asect 0x0e00  # массив с надписью Place your -deck ship
 place_array>
     dc "Place your -deck ship", 0
 
+asect 0x0f00
+prev_btn_state: dc 0
+
 asect 0x0fa0  # массив с полями бота
 matrix_adresses>
     dc 0x8020
@@ -71,6 +74,8 @@ ships_array>
     dc 1
     dc 1
 
+
+
 # Main program section
 rsect main
 
@@ -78,6 +83,7 @@ main>
 ldi r0, 0x7000   # 1. Загружаем нужный адрес в обычный регистр r0
 stsp r0
 
+return:
 
 ldi r5, ships_array
 ldw r5, r6
@@ -170,11 +176,6 @@ check_reverse_hor:
     beq check_button_hor
     ldi r7, 0
     stw r4,r7
-    
-   
-
-    # ldi r0, 0x8034 # координата y
-    # ldi r1, 0b1000000000 # координата x
 
     br check_button_ver
 
@@ -192,36 +193,42 @@ ldi r0, 0x8032 # координата y
 ldi r1, 0b1000000000 # координата x
 
 
+
+
+print_shipp:
 pop r7
 move r7, r3
 push r3 # достали размер корабля и засунули обратно, он остался в регистре 7
 
 move r7, r6
 
+move r0, r4
 
-ldi r3, 2
 print_ship:
-add r0, r3,r0
-stw r0, r1
+ldi r3, 2
+add r4, r3,r4
+stw r4, r1
 
 dec r6
 tst r6
 bne print_ship
 
 
+button_ver:
 
+ldi r5, 0x8048
+ldb r5, r5 # получили кнопку
 
-ldi r0, 0x8048
-ldb r0, r0 # получили кнопку
 
 # детектор фронта----------
-move r6, r2 
+ldi r3, prev_btn_state 
+ldb r3, r2
+stb r3, r5
 
 not r2, r2
 
-and r2, r1, r2
-
-move r1, r6 
+and r2, r5, r2
+ 
 
 #--------------------------
 
@@ -229,17 +236,72 @@ check_left_ver:
     ldi r3, 1
     and r2,r3,r7
     tst r7
-    # beq check_up
+    beq check_up_ver
 
-    move r7, r6
+    shl r1, r1, 1
 
-    # print_ship_ver:
+    br print_shipp
     
 
+check_up_ver:
+    ldi r3, 0b10
+    and r2,r3,r7
+    tst r7
+    beq check_right_ver
+    ldi r5, 0
+
+    pop r7
+    move r7, r3
+    push r3
+
+    move r0, r4
+    add r4, r7, r4
+    add r4, r7, r4
+    stw r4, r5      
+
+    dec r0
+    dec r0
+
+    br print_shipp
 
 
+check_right_ver:
+    ldi r3, 0b100
+    and r2,r3,r7
+    tst r7
+    beq check_down_ver
 
+    shr r1, r1, 1
 
+    br print_shipp
+
+check_down_ver:
+    ldi r3, 0b1000
+    and r2, r3, r7
+    tst r7
+    beq check_reverse_ver
+    
+    ldi r5, 0b0
+    
+    # Стираем верхнюю палубу корабля (она находится по адресу r0 + 2)
+    ldi r3, 2
+    add r0, r3, r4   # Записываем во временный регистр r4 адрес (r0 + 2)
+    stw r4, r5       # Стираем старую верхнюю палубу
+    
+    # Сдвигаем базовую координату y вниз на 1 шаг (на 2 байта)
+    add r0, r3, r0   # r0 = r0 + 2
+
+    br print_shipp
+
+check_reverse_ver:
+    ldi r3, 0b10000
+    and r2,r3,r7
+    tst r7
+    beq button_ver
+
+    shr r1, r1, 1
+
+    br return
 
 
 
