@@ -75,6 +75,176 @@ ships_array>
 rsect main
 
 main>
+ldi r0, 0x7000   # 1. Загружаем нужный адрес в обычный регистр r0
+stsp r0
+
+
+ldi r5, ships_array
+ldw r5, r6
+
+push r6
+
+ldi r7, 0b0
+
+move r6, r4
+
+
+ldi r3, 0b1000000000
+
+make_ship: # создаем маску на основании размера корабля
+or r3, r7, r7
+shr r7,r7, 1
+dec r4
+tst r4
+bne make_ship
+
+shl r7,r7, 1
+
+ldi r4, 0x8034
+
+ldi r6, 0
+
+stw r4,r7
+
+move r7, r5
+
+check_button_hor:
+
+ldi r0, 0x8048
+ldb r0, r1
+
+# детектор фронта----------
+move r6, r2 
+
+not r2, r2
+
+and r2, r1, r2
+
+move r1, r6 
+
+#--------------------------
+
+check_left_hor:
+    ldi r3, 1
+    and r2,r3,r7
+    tst r7
+    beq check_up_hor
+    shl r5, r5, 1 
+    stw r4, r5
+
+check_up_hor:
+    ldi r3, 0b10
+    and r2,r3,r7
+    tst r7
+    beq check_right_hor
+    ldi r7, 0
+    stw r4,r7
+    dec r4
+    dec r4
+    stw r4, r5
+
+
+check_right_hor:
+    ldi r3, 0b100
+    and r2,r3,r7
+    tst r7
+    beq check_down_hor
+    shr r5, r5, 1 
+    stw r4, r5
+
+check_down_hor:
+    ldi r3, 0b1000
+    and r2,r3,r7
+    tst r7
+    beq check_reverse_hor
+    ldi r7, 0
+    stw r4,r7
+    inc r4
+    inc r4
+    stw r4, r5
+
+check_reverse_hor:
+    ldi r3, 0b10000
+    and r2,r3,r7
+    tst r7
+    beq check_button_hor
+    ldi r7, 0
+    stw r4,r7
+    
+   
+
+    # ldi r0, 0x8034 # координата y
+    # ldi r1, 0b1000000000 # координата x
+
+    br check_button_ver
+
+
+br check_button_hor
+
+
+
+
+check_button_ver:
+#r0 - y
+#r1 - x
+
+ldi r0, 0x8032 # координата y
+ldi r1, 0b1000000000 # координата x
+
+
+pop r7
+move r7, r3
+push r3 # достали размер корабля и засунули обратно, он остался в регистре 7
+
+move r7, r6
+
+
+ldi r3, 2
+print_ship:
+add r0, r3,r0
+stw r0, r1
+
+dec r6
+tst r6
+bne print_ship
+
+
+
+
+ldi r0, 0x8048
+ldb r0, r0 # получили кнопку
+
+# детектор фронта----------
+move r6, r2 
+
+not r2, r2
+
+and r2, r1, r2
+
+move r1, r6 
+
+#--------------------------
+
+check_left_ver:
+    ldi r3, 1
+    and r2,r3,r7
+    tst r7
+    # beq check_up
+
+    move r7, r6
+
+    # print_ship_ver:
+    
+
+
+
+
+
+
+
+
+
+
 
 stb r1, r0    # Записываем в 0-й ряд матрицы (адрес 8020)
     br start
@@ -109,7 +279,8 @@ start:
     ldi r0, 0x800c
     ldi r1, gen_array
     ldi r3, 18
-    write:
+    write:ldi r0, 0x7000   # 1. Загружаем нужный адрес в обычный регистр r0
+    stsp r0
     ldb  r1, r2
     stb r0, r2
     inc r1
@@ -777,7 +948,6 @@ stb r0,r0
 
 
 
-
 # РИСОВАНИЕ ДВУХ ПОЛЕЙ--------------------------
 
 ldi r1, 0x3000   # Указатель на начало поля в памяти (откуда читаем)
@@ -812,7 +982,7 @@ skip_set:
     
     # 5. Выводим ряд на матрицу
     ld r4, r3        # Загружаем адрес порта матрицы (например, 0x8020) из массива
-    st r3, r0        # Записываем 16-битное слово (наши 10 бит) в порт! 
+    stw r3, r0        # Записываем 16-битное слово (наши 10 бит) в порт! 
                      # ВАЖНО: Тут используем st (слово), а не stb (байт), 
                      # так как порты/регистры матрицы 16-битные!
 
@@ -829,7 +999,6 @@ skip_set:
     # tst r2
     # bnz print_row
 #-----------------------------------------------
-
 
 
 
