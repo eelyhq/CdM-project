@@ -24,8 +24,50 @@ asect 0x0e00  # массив с надписью Place your -deck ship
 place_array>
     dc "Place your -deck ship", 0
 
-asect 0x0f00
+asect 0x0eba
+pointer_len_ship>
+    dc 0
+
+asect 0x0ea0
+board_state: 
+    dc 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+
+
+asect 0x0ef0
 prev_btn_state: dc 0
+
+
+asect 0x0ef4
+y_ver_fn: dc 0
+
+
+# координаты начальной точки корабля
+asect 0x0ef6
+x_ver_st: dc 0
+
+asect 0x0ef8
+y_ver_st: dc 0
+
+
+# координаты конечной точки корабля
+asect 0x0efa
+x_hor_fn: dc 0
+
+
+# координаты начальной точки корабля
+asect 0x0efe
+x_hor_st: dc 0
+
+asect 0x0f00
+y_hor_st: dc 0
+
+
+
+asect 0x0f02
+x_ver: dc 0
+
+asect 0x0f04
+y_ver: dc 0
 
 asect 0x0fa0  # массив с полями бота
 matrix_adresses>
@@ -83,36 +125,57 @@ main>
 ldi r0, 0x7000   # 1. Загружаем нужный адрес в обычный регистр r0
 stsp r0
 
+ldi r5, ships_array # получаем размер корабля в р6
+ldi r6, pointer_len_ship
+stw r6, r5
+
 return:
+ldi r6, pointer_len_ship
+ldw r6, r6
+ldb r6, r6
 
-ldi r5, ships_array
-ldw r5, r6
+push r6 # кладем его в стек, чтобы осовободить регистр
 
-push r6
-
-ldi r7, 0b0
-
-move r6, r4
-
-
-ldi r3, 0b1000000000
+ldi r7, 0b0 # для создания маски горизонтального корабля
+ldi r3, 0b1000000000 # для добавления нулей в маску
 
 make_ship: # создаем маску на основании размера корабля
 or r3, r7, r7
 shr r7,r7, 1
-dec r4
-tst r4
+dec r6
+tst r6
 bne make_ship
 
-shl r7,r7, 1
+shl r7,r7, 1 # откат, так как сделали лишний из-за особенности цикла
 
-ldi r4, 0x8034
+ldi r4, 0x8034 # адрес первой строки
 
-ldi r6, 0
+ldi r0, y_hor_st
+ldw r0, r0
+ldi r1, board_state
+add r1, r0, r1
+ldw r1, r1
+move r7, r5 # в r5 маска
+or r1, r7, r7
+stw r4,r7 # пишем в первую строку корабль 
 
-stw r4,r7
 
-move r7, r5
+
+# cохраняем начальные координаты для проверки границ
+ldi r1, 0
+ldi r0, x_hor_st
+stw r0, r1
+ldi r0, y_hor_st
+stw r0, r1
+
+pop r7
+push r7
+
+ldi r1, -1
+add r1, r7, r1
+ldi r0, x_hor_fn
+stw r0, r1
+#--------------------------------------------
 
 check_button_hor:
 
@@ -120,14 +183,15 @@ ldi r0, 0x8048
 ldb r0, r1
 
 # детектор фронта----------
-move r6, r2 
+
+ldi r3, prev_btn_state 
+ldb r3, r2
+stb r3, r1
 
 not r2, r2
 
 and r2, r1, r2
-
-move r1, r6 
-
+ 
 #--------------------------
 
 check_left_hor:
@@ -135,52 +199,220 @@ check_left_hor:
     and r2,r3,r7
     tst r7
     beq check_up_hor
+
+    # проверка на границы
+    ldi r3, x_hor_st
+    ldw r3, r3
+
+    tst r3
+    beq check_button_hor
+
+    dec r3
+    ldi r2, x_hor_st
+    stw r2, r3
+
+    ldi r2, x_hor_fn
+    ldw r2, r3
+    dec r3
+    stw r2, r3
+    #-------------------
+
+    ldi r0, y_hor_st
+    ldw r0, r0
+    ldi r1, board_state
+    add r1, r0, r1
+    ldw r1, r1
+
     shl r5, r5, 1 
-    stw r4, r5
+    move r5, r7
+    or r1, r7, r7
+    stw r4, r7
+    br check_button_hor
 
 check_up_hor:
     ldi r3, 0b10
     and r2,r3,r7
     tst r7
     beq check_right_hor
-    ldi r7, 0
-    stw r4,r7
-    dec r4
-    dec r4
-    stw r4, r5
 
+    # проверка на границы
+    ldi r3, y_hor_st
+    ldw r3, r3
+
+    tst r3
+    beq check_button_hor
+
+    dec r3
+    ldi r2, y_hor_st
+    stw r2, r3
+
+    #-------------------
+
+    ldi r0, y_hor_st
+    ldw r0, r0
+    ldi r1, board_state
+    add r1, r0, r1
+    dec r1
+    ldw r1,r2
+    stw r4,r2
+    inc r1
+    ldw r1, r1
+    
+
+    move r5, r7
+    or r1, r7, r7
+
+   
+    
+    dec r4
+    dec r4
+    stw r4, r7
+    br check_button_hor
 
 check_right_hor:
     ldi r3, 0b100
     and r2,r3,r7
     tst r7
     beq check_down_hor
+
+    # проверка на границы
+    ldi r3, x_hor_fn
+    ldw r3, r3
+
+    ldi r2, 9
+    cmp r2, r3
+    beq check_button_hor
+
+    inc r3
+    ldi r2, x_hor_fn
+    stw r2, r3
+
+    ldi r2, x_hor_st
+    ldw r2, r3
+    inc r3
+    stw r2, r3
+    #------------------
+
+    ldi r0, y_hor_st
+    ldw r0, r0
+    ldi r1, board_state
+    add r1, r0, r1
+    ldw r1, r1
+
+
     shr r5, r5, 1 
-    stw r4, r5
+    move r5, r7
+    or r1, r7, r7
+    stw r4, r7
+    br check_button_hor
 
 check_down_hor:
     ldi r3, 0b1000
     and r2,r3,r7
     tst r7
     beq check_reverse_hor
-    ldi r7, 0
-    stw r4,r7
+
+    # проверка на границы
+    ldi r3, y_hor_st
+    ldw r3, r3
+
+    ldi r2, 9
+    cmp r2, r3
+    beq check_button_hor
+
+    inc r3
+    ldi r2, y_hor_st
+    stw r2, r3
+    #-----------------
+
+    ldi r0, y_hor_st
+    ldw r0, r0
+    ldi r1, board_state
+    add r1, r0, r1
+    dec r1
+    ldw r1, r2
+    stw r4, r2
+
+    inc r1
+
+    ldw r1, r1
+    
+    move r5, r7
+    or r1, r7, r7
+    
     inc r4
     inc r4
-    stw r4, r5
+    stw r4, r7
+    br check_button_hor
 
 check_reverse_hor:
     ldi r3, 0b10000
     and r2,r3,r7
     tst r7
-    beq check_button_hor
+    beq check_place_hor
     ldi r7, 0
     stw r4,r7
 
     br check_button_ver
 
+check_place_hor:
+    ldi r3, 0b100000
+    and r2,r3,r7
+    tst r7
+    beq check_button_hor
+   
+    ldi r0, x_hor_st
+    ldw r0, r0 # начальная координата корабля
 
-br check_button_hor
+    ldi r2, x_hor_fn
+    ldw r2, r2 # конечная координата корабля
+
+    ldi r3, 9
+
+    sub r3, r0, r0 # на сколько надо сдвинуть влево до начала
+
+    sub r3, r2, r2 # на сколько надо сдвинуть влево до конца
+    
+    ldi r3, 0b1 # для добавления 1
+    ldi r4, 0b0 # для сдвига, и результата
+
+    pop r5 
+    push r5
+
+    make_ship2:
+    shl r4, r4, 1
+    or r3, r4, r4
+    
+    dec r5 
+    tst r5
+    bne make_ship2
+    
+    shift:
+    shl r4, r4, 1
+    dec r2
+    tst r2
+    bne shift
+
+    ldi r0, y_hor_st
+    ldw r0, r0
+
+    ldi r1, board_state
+
+    add r0, r1, r1 # получаю ряд, на который установить горизонтальный корабль
+
+    ldw r1, r0
+
+    or r4, r0, r4
+
+    stw r1, r4 # сохраняю маску с кораблем
+    
+    ldi r0, pointer_len_ship
+    ldw r0, r1
+    inc r1
+    inc r1
+    stw r0, r1
+
+br return
 
 
 
@@ -193,25 +425,56 @@ ldi r0, 0x8032 # координата y
 ldi r1, 0b1000000000 # координата x
 
 
+# заполняем начальные координаты
+ldi r2, x_ver
+stw r2, r1
+ldi r2, y_ver
+stw r2, r0
 
+ldi r1, 0
+
+ldi r0, x_ver_st
+stw r0, r1
+
+ldi r0, y_ver_st
+stw r0, r1
+
+
+pop r7
+push r7
+
+ldi r1, -1
+add r1, r7, r1
+ldi r0, y_ver_fn
+stw r0, r1
+#---------------------------
+
+ldi r0, y_ver
+ldw r0, r0
+ldi r1, x_ver
+ldw r1, r1
 
 print_shipp:
 pop r7
-move r7, r3
-push r3 # достали размер корабля и засунули обратно, он остался в регистре 7
+push r7
 
 move r7, r6
 
-move r0, r4
+ldi r0, y_ver
+ldw r0,r0
 
+ldi r1, x_ver
+ldw r1, r1
 print_ship:
 ldi r3, 2
-add r4, r3,r4
-stw r4, r1
+add r0, r3,r0
+stw r0, r1
 
 dec r6
 tst r6
 bne print_ship
+
+
 
 
 button_ver:
@@ -238,8 +501,23 @@ check_left_ver:
     tst r7
     beq check_up_ver
 
-    shl r1, r1, 1
+    # проверка на границы
+    ldi r0, x_ver_st
+    ldw r0, r0
 
+    tst r0
+    beq button_ver
+
+    dec r0
+    ldi r1, x_ver_st
+    stw r1, r0
+    #---------------------
+
+    ldi r0, x_ver
+    ldw r0, r1
+
+    shl r1, r1, 1
+    stw r0, r1
     br print_shipp
     
 
@@ -248,11 +526,32 @@ check_up_ver:
     and r2,r3,r7
     tst r7
     beq check_right_ver
+
+    # проверка на границы
+    ldi r0, y_ver_st
+    ldw r0, r0
+
+    tst r0
+    beq button_ver
+
+    dec r0
+    ldi r1, y_ver_st
+    stw r1, r0
+
+    ldi r0, y_ver_fn
+    ldw r0, r1
+    dec r1
+    stw r0, r1
+    #---------------------
+
+    ldi r1, y_ver
+    ldw r1, r0
+
+
     ldi r5, 0
 
     pop r7
-    move r7, r3
-    push r3
+    push r7
 
     move r0, r4
     add r4, r7, r4
@@ -261,6 +560,8 @@ check_up_ver:
 
     dec r0
     dec r0
+
+    stw r1, r0
 
     br print_shipp
 
@@ -271,7 +572,24 @@ check_right_ver:
     tst r7
     beq check_down_ver
 
+    # проверка на границы
+    ldi r0, x_ver_st
+    ldw r0, r0
+
+    ldi r1, 9
+    cmp r0, r1
+    beq button_ver
+
+    inc r0
+    ldi r1, x_ver_st
+    stw r1, r0
+    #---------------------
+
+    ldi r0, x_ver
+    ldw r0, r1
+
     shr r1, r1, 1
+    stw r0, r1
 
     br print_shipp
 
@@ -280,7 +598,28 @@ check_down_ver:
     and r2, r3, r7
     tst r7
     beq check_reverse_ver
-    
+
+    # проверка на границы
+    ldi r0, y_ver_fn
+    ldw r0, r0
+
+    ldi r1, 9
+    cmp r1, r0
+    beq button_ver
+
+    inc r0
+    ldi r1, y_ver_fn
+    stw r1, r0
+
+    ldi r0, y_ver_st
+    ldw r0, r1
+    inc r1
+    stw r0, r1
+    #---------------------
+
+    ldi r1, y_ver
+    ldw r1, r0
+
     ldi r5, 0b0
     
     # Стираем верхнюю палубу корабля (она находится по адресу r0 + 2)
@@ -291,6 +630,8 @@ check_down_ver:
     # Сдвигаем базовую координату y вниз на 1 шаг (на 2 байта)
     add r0, r3, r0   # r0 = r0 + 2
 
+    stw r1, r0
+
     br print_shipp
 
 check_reverse_ver:
@@ -299,17 +640,9 @@ check_reverse_ver:
     tst r7
     beq button_ver
 
-    shr r1, r1, 1
-
     br return
 
-
-
-
-
-
-stb r1, r0    # Записываем в 0-й ряд матрицы (адрес 8020)
-    br start
+br start
 
 get_cell_index:
     # 1. ПРОЛОГ (Сохраняем регистры)
