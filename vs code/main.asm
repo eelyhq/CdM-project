@@ -425,7 +425,7 @@ check_place_hor:
 
 
 
-    no_test_up:
+    # no_test_up:
     # ----------------------------
     or r7, r0, r7
 
