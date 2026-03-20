@@ -122,6 +122,79 @@ ships_array>
 rsect main
 
 main>
+
+br beg
+# Универсальная функция проверки места на доске
+# Вызывать через: jsr check_placement
+# Универсальная функция проверки места на доске
+# Вызывать через: jsr check_placement
+check_placement:
+    # Сохраняем значения регистров
+    push r3
+    push r4
+    push r5
+    push r6
+
+    # --- ШАГ 1: Делаем "широкую" маску для проверки диагоналей ---
+    move r1, r5           
+    move r1, r6
+    shl r6, r6, 1         
+    or r5, r6, r5
+    move r1, r6
+    shr r6, r6, 1         
+    or r5, r6, r5         
+
+    # --- ШАГ 2: Проверка текущего ряда (Y) ---
+    ldi r3, board_state
+    add r0, r3, r4
+    add r0, r4, r4        # r4 = адрес текущего ряда
+    
+    ldw r4, r6            # ИСПРАВЛЕНО: читаем из адреса r4 в регистр r6
+    and r6, r5, r6
+    bne placement_error   
+
+    # --- ШАГ 3: Проверка ряда ВЫШЕ (Y - 1) ---
+    tst r0
+    beq skip_up_check     
+
+    dec r4
+    dec r4                
+    ldw r4, r6            # ИСПРАВЛЕНО
+    and r6, r5, r6
+    bne placement_error
+    inc r4
+    inc r4                
+
+skip_up_check:
+
+    # --- ШАГ 4: Проверка ряда НИЖЕ (Y + 1) ---
+    ldi r6, 9
+    cmp r0, r6
+    beq skip_down_check   
+
+    inc r4
+    inc r4                
+    ldw r4, r6            # ИСПРАВЛЕНО
+    and r6, r5, r6
+    bne placement_error
+
+skip_down_check:
+    ldi r2, 0             # Код успеха
+    br end_placement_check
+
+placement_error:
+    ldi r2, 1             # Код ошибки (коллизия)
+
+end_placement_check:
+    # Восстанавливаем регистры
+    pop r6
+    pop r5
+    pop r4
+    pop r3
+    rts
+
+
+beg:
 ldi r0, 0x7000   # 1. Загружаем нужный адрес в обычный регистр r0
 stsp r0
 
@@ -210,7 +283,7 @@ check_left_hor:
 
     dec r3
     ldi r2, x_hor_st
-    stw r2, r3
+    stw r2, r3  
 
     ldi r2, x_hor_fn
     ldw r2, r3
@@ -255,13 +328,13 @@ check_up_hor:
     ldi r1, board_state
     add r1, r0, r1
     add r1, r0, r1
-    dec r1
-    dec r1
+    inc r1
+    inc r1
     
     ldw r1,r2
     stw r4,r2
-    inc r1
-    inc r1
+    dec r1
+    dec r1
     
     ldw r1, r1
     
@@ -361,84 +434,56 @@ check_reverse_hor:
     and r2,r3,r7
     tst r7
     beq check_place_hor
-    ldi r7, 0
-    stw r4,r7
+    ldi r7, y_hor_st
+    ldw r7, r7
+
+    ldi r6, board_state
+    add r6, r7, r6
+    add r6, r7, r6
+    ldw r6, r6
+
+    stw r4,r6
 
     br check_button_ver
-
+    
 check_place_hor:
     ldi r3, 0b100000
-    and r2,r3,r7
+    and r2, r3, r7        
     tst r7
     beq check_button_hor
 
-    move r5, r7
-    
+    # Подготовка к вызову функции проверки
     ldi r0, y_hor_st
-    ldw r0, r0
+    ldw r0, r0            
+    move r5, r1           
 
-    ldi r1, board_state
-
-    add r0, r1, r1 # получаю ряд, на который установить горизонтальный корабль
-    add r0, r1, r1 # получаю ряд, на который установить горизонтальный корабль
-
-    ldw r1, r0
+    jsr check_placement   
     
-    # проверка на границы кораблей
-    move r0, r2
+    tst r2                
+    bne check_button_hor  
 
-    and r7, r2, r2
+    # --- ЕСЛИ МОЖНО СТАВИТЬ (УСПЕХ) ---
 
-    tst r2
-    bne check_button_hor
+    # 1. Записываем корабль в массив board_state
+    ldi r3, board_state
+    add r0, r3, r3
+    add r0, r3, r3        
 
-    move r0, r2
-
-    shl r2
-
-    and r7, r2, r2
-
-    bne check_button_hor
-
-    move r0, r2
-
-    shr r2
-
-    and r7, r2, r2
-
-    bne check_button_hor
+    ldw r3, r1            # ИСПРАВЛЕНО: читаем из адреса r3 в регистр r1
+    or r5, r1, r1         
+    stw r3, r1            
     
-    # move r0, r2
-
-    # ldi r1, y_hor_st
-    # ldw r1, r1
-
-    # tst r1
-    # beq no_test_up
-
-    # ldi r3, board_state
-
-    # add r1, r3, r3 
-    # add r1, r3, r3 
-
-    # ldw r3, r3
-
-
-
-    # no_test_up:
-    # ----------------------------
-    or r7, r0, r7
-
-    stw r1, r7 # сохраняю маску с кораблем
-    
+    # 2. Передвигаем указатель на следующий размер корабля
     ldi r0, pointer_len_ship
-    ldw r0, r1
+    ldw r0, r1            # ИСПРАВЛЕНО: читаем из адреса r0 в регистр r1
     inc r1
     inc r1
     stw r0, r1
 
-br return
+    # 3. Выравниваем стек
+    pop r7
 
+    br return
 
 
 
@@ -468,16 +513,12 @@ stw r0, r1
 pop r7
 push r7
 
-ldi r1, -1
+ldi r1, -1 # заполняем нижюю координату
 add r1, r7, r1
 ldi r0, y_ver_fn
 stw r0, r1
 #---------------------------
 
-ldi r0, y_ver
-ldw r0, r0
-ldi r1, x_ver
-ldw r1, r1
 
 print_shipp:
 pop r7
@@ -488,18 +529,30 @@ move r7, r6
 ldi r0, y_ver
 ldw r0,r0
 
+ldi r2, y_ver_st # нужна для сохранения уже поставленых суден
+ldw r2, r2
+dec r2
+
+
 ldi r1, x_ver
 ldw r1, r1
 print_ship:
 ldi r3, 2
 add r0, r3,r0
-stw r0, r1
+inc r2
+
+ldi r3, board_state
+add r3, r2, r3
+add r3, r2, r3
+ldw r3, r3
+
+or r1, r3, r3
+
+stw r0, r3
 
 dec r6
 tst r6
 bne print_ship
-
-
 
 
 button_ver:
@@ -572,8 +625,15 @@ check_up_ver:
     ldi r1, y_ver
     ldw r1, r0
 
+    ldi r3, y_ver_fn
+    ldw r3, r3
+    inc r3
 
-    ldi r5, 0
+    ldi r5, board_state
+    add r5, r3, r5
+    add r5, r3, r5
+    
+    ldw r5, r5
 
     pop r7
     push r7
@@ -642,10 +702,20 @@ check_down_ver:
     stw r0, r1
     #---------------------
 
+    ldi r3, y_ver_st
+    ldw r3, r3
+    dec r3
+
+    ldi r5, board_state
+    add r5, r3, r5
+    add r5, r3, r5
+
+    ldw r5, r5
+
     ldi r1, y_ver
     ldw r1, r0
 
-    ldi r5, 0b0
+
     
     # Стираем верхнюю палубу корабля (она находится по адресу r0 + 2)
     ldi r3, 2
@@ -663,11 +733,112 @@ check_reverse_ver:
     ldi r3, 0b10000
     and r2,r3,r7
     tst r7
-    beq button_ver
+    beq check_place_ver
+
+    pop r7
+    push r7
+
+    move r7, r6
+
+    ldi r0, y_ver
+    ldw r0,r0
+
+    ldi r2, y_ver_st # нужна для сохранения уже поставленых суден
+    ldw r2, r2
+    dec r2
+
+    del_ship:
+    ldi r3, 2
+    add r0, r3,r0
+    inc r2
+
+    ldi r3, board_state
+    add r3, r2, r3
+    add r3, r2, r3
+    ldw r3, r3
+
+    stw r0, r3
+
+    dec r6
+    tst r6
+    bne del_ship
 
     br return
 
-br start
+  check_place_ver:
+    ldi r3, 0b100000
+    and r2, r3, r7        
+    tst r7
+    beq  button_ver
+
+    #r0 - координата y клетки проверяемой
+    #r5 и r1 - маска для ряда 
+    
+    # Подготовка к вызову функции проверки
+
+    pop r3 # размер корабля
+    push r3
+    ldi r4, 0
+    loop:
+    dec r3
+    ldi r0, y_ver_st
+    ldw r0, r0  
+    ldi r1, x_ver
+    ldw r1, r1                 
+
+    add r0, r3, r0
+    jsr check_placement   
+    or r2, r4, r4
+    tst r4                
+    bne button_ver
+    tst r3
+    bne loop
+
+    # --- ЕСЛИ МОЖНО СТАВИТЬ (УСПЕХ) ---
+
+    # 1. Записываем корабль в массив board_state
+    ldi r0, y_ver_st
+    ldw r0, r0
+
+    pop r1
+    push r1
+
+  loop2:
+    dec r1                # уменьшаем счетчик палуб (r1)
+    add r0, r1, r2        # r2 = Y базовый (r0) + смещение (r1) = текущий ряд
+    
+    # Считаем точный адрес в памяти: r3 = board_state + r2 * 2
+    ldi r3, board_state
+    add r2, r3, r3        # r3 = board_state + Y
+    add r2, r3, r3        # r3 = board_state + Y * 2
+
+    ldw r3, r6            # Читаем текущее состояние строки с доски (по адресу r3) в r6
+    
+    ldi r4, x_ver         # Загружаем АДРЕС переменной маски
+    ldw r4, r4            # Читаем САМУ МАСКУ из памяти в r4!
+
+    or r4, r6, r6         # Накладываем маску (r4) на строку доски (r6)
+
+    stw r3, r6            # Записываем обновленную строку (r6) ОБРАТНО по адресу (r3)
+    
+    tst r1
+    bne loop2             # Крутим цикл, пока r1 не станет равен 0
+
+    # 2. Передвигаем указатель на следующий размер корабля
+    ldi r0, pointer_len_ship
+    ldw r0, r1            
+    inc r1
+    inc r1
+    stw r0, r1
+
+    # 3. Выравниваем стек
+    pop r7
+
+br return
+
+
+
+
 
 get_cell_index:
     # 1. ПРОЛОГ (Сохраняем регистры)
