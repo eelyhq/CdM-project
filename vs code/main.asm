@@ -28,9 +28,9 @@ asect 0x0eba
 pointer_len_ship>
     dc 0
 
-asect 0x0ea0
+asect 0x0e90
 board_state: 
-    dc 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+    dc 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
 
 
 asect 0x0ef0
@@ -150,10 +150,11 @@ shl r7,r7, 1 # откат, так как сделали лишний из-за �
 
 ldi r4, 0x8034 # адрес первой строки
 
-ldi r0, y_hor_st
-ldw r0, r0
+# ldi r0, y_hor_st
+# ldw r0, r0
 ldi r1, board_state
-add r1, r0, r1
+# add r1, r0, r1
+# add r1, r0, r1  
 ldw r1, r1
 move r7, r5 # в r5 маска
 or r1, r7, r7
@@ -221,6 +222,7 @@ check_left_hor:
     ldw r0, r0
     ldi r1, board_state
     add r1, r0, r1
+    add r1, r0, r1
     ldw r1, r1
 
     shl r5, r5, 1 
@@ -252,10 +254,15 @@ check_up_hor:
     ldw r0, r0
     ldi r1, board_state
     add r1, r0, r1
+    add r1, r0, r1
     dec r1
+    dec r1
+    
     ldw r1,r2
     stw r4,r2
     inc r1
+    inc r1
+    
     ldw r1, r1
     
 
@@ -297,6 +304,7 @@ check_right_hor:
     ldw r0, r0
     ldi r1, board_state
     add r1, r0, r1
+    add r1, r0, r1
     ldw r1, r1
 
 
@@ -329,10 +337,13 @@ check_down_hor:
     ldw r0, r0
     ldi r1, board_state
     add r1, r0, r1
+    add r1, r0, r1
+    dec r1
     dec r1
     ldw r1, r2
     stw r4, r2
 
+    inc r1
     inc r1
 
     ldw r1, r1
@@ -360,51 +371,65 @@ check_place_hor:
     and r2,r3,r7
     tst r7
     beq check_button_hor
-   
-    ldi r0, x_hor_st
-    ldw r0, r0 # начальная координата корабля
 
-    ldi r2, x_hor_fn
-    ldw r2, r2 # конечная координата корабля
-
-    ldi r3, 9
-
-    sub r3, r0, r0 # на сколько надо сдвинуть влево до начала
-
-    sub r3, r2, r2 # на сколько надо сдвинуть влево до конца
+    move r5, r7
     
-    ldi r3, 0b1 # для добавления 1
-    ldi r4, 0b0 # для сдвига, и результата
-
-    pop r5 
-    push r5
-
-    make_ship2:
-    shl r4, r4, 1
-    or r3, r4, r4
-    
-    dec r5 
-    tst r5
-    bne make_ship2
-    
-    shift:
-    shl r4, r4, 1
-    dec r2
-    tst r2
-    bne shift
-
     ldi r0, y_hor_st
     ldw r0, r0
 
     ldi r1, board_state
 
     add r0, r1, r1 # получаю ряд, на который установить горизонтальный корабль
+    add r0, r1, r1 # получаю ряд, на который установить горизонтальный корабль
 
     ldw r1, r0
+    
+    # проверка на границы кораблей
+    move r0, r2
 
-    or r4, r0, r4
+    and r7, r2, r2
 
-    stw r1, r4 # сохраняю маску с кораблем
+    tst r2
+    bne check_button_hor
+
+    move r0, r2
+
+    shl r2
+
+    and r7, r2, r2
+
+    bne check_button_hor
+
+    move r0, r2
+
+    shr r2
+
+    and r7, r2, r2
+
+    bne check_button_hor
+    
+    # move r0, r2
+
+    # ldi r1, y_hor_st
+    # ldw r1, r1
+
+    # tst r1
+    # beq no_test_up
+
+    # ldi r3, board_state
+
+    # add r1, r3, r3 
+    # add r1, r3, r3 
+
+    # ldw r3, r3
+
+
+
+    no_test_up:
+    # ----------------------------
+    or r7, r0, r7
+
+    stw r1, r7 # сохраняю маску с кораблем
     
     ldi r0, pointer_len_ship
     ldw r0, r1
