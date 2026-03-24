@@ -20,73 +20,90 @@ rsect exc_handlers
 default_handler>
     halt
 
-asect 0x0e00  # массив с надписью Place your -deck ship
+asect 0x0e6fe
+hor_ver_flag>
+    dc 0
+
+
+asect 0x0e70  # массив с надписью Place your -deck ship
 place_array>
     dc "Place your -deck ship", 0
 
-asect 0x0d50
+asect 0x0e90
+y_min>
+    dc 0
+
+asect 0x0e92
+y_max>
+    dc 0
+
+asect 0x0e94
+ship_mask>
+    dc 0, 0
+
+asect 0x0e98
 pointer_len_ship>
     dc 0
 
-asect 0x0d60
+asect 0x0ea0
 board_state_hit: 
     dc 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
 
-asect 0x0d90
+asect 0x0ee0
 board_state_miss: 
     dc 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
 
-asect 0x0dba
+asect 0x0f10
 board_state_fire: 
     dc 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
 
-asect 0x0d00
+asect 0x0f40
 board_state_bot: 
     dc 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
 
 
-asect 0x0e90
+asect 0x0f70
 board_state: 
     dc 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
 
 
-asect 0x0ef0
+asect 0x0fa0
 prev_btn_state: dc 0
 
 
-asect 0x0ef4
+asect 0x0fa2
 y_ver_fn: dc 0
 
 
 # координаты начальной точки корабля
-asect 0x0ef6
+asect 0x0fa4
 x_ver_st: dc 0
 
-asect 0x0ef8
+asect 0x0fa6
 y_ver_st: dc 0
 
 
 # координаты конечной точки корабля
-asect 0x0efa
+asect 0x0fa8
 x_hor_fn: dc 0
 
 
 # координаты начальной точки корабля
-asect 0x0efe
+asect 0x0faa
 x_hor_st: dc 0
 
-asect 0x0f00
+asect 0x0fac
 y_hor_st: dc 0
 
 
 
-asect 0x0f02
+asect 0x0fae
 x_ver: dc 0
 
-asect 0x0f04
+asect 0x0fb0
 y_ver: dc 0
 
-asect 0x0fa0  # массив с полями бота
+asect 0x0fc0  # массив с полями бота
 matrix_adresses>
     dc 0x8020
     dc 0x8022
@@ -99,26 +116,10 @@ matrix_adresses>
     dc 0x8030
     dc 0x8032
 
-asect 0x0fff  # массив с надписью Ship generation..
+asect 0x1000  # массив с надписью Ship generation..
 gen_array>
     dc "Ship generation..", 0
-    # dc 104
-    # dc 105
-    # dc 112
-    # dc 32
-    # dc 103
-    # dc 101
-    # dc 110
-    # dc 101
-    # dc 114
-    # dc 97
-    # dc 116
-    # dc 105
-    # dc 111
-    # dc 110
-    # dc 46
-    # dc 46
-    # dc 46
+    
 
 asect 0x10f0  # массив с размерами кораблей
 ships_array>
@@ -271,28 +272,28 @@ start:
 # 3 = Попадание 
 #-------------------
 
-# init_game:
-#     # 1. Очищаем поле ИГРОКА (заполняем нулями от 0x2000 до 0x2063)
-#     ldi r0, 0x2000   # r0 хранит ТЕКУЩИЙ адрес (начинаем с начала поля)
-#     ldi r1, 100      # r1 это счетчик цикла (нам нужно 100 клеток)
-#     ldi r2, 0        # r2 это значение "Вода" (0)
+init_game:
+    # 1. Очищаем поле ИГРОКА (заполняем нулями от 0x2000 до 0x2063)
+    ldi r0, 0x2000   # r0 хранит ТЕКУЩИЙ адрес (начинаем с начала поля)
+    ldi r1, 100      # r1 это счетчик цикла (нам нужно 100 клеток)
+    ldi r2, 0        # r2 это значение "Вода" (0)
 
-# loop_clear_player:
-#     stb r0, r2       # Записываем 0 в память по адресу из r0
-#     add r0, 1       # Увеличиваем адрес на 1 (переход к след. клетке)
-#     sub r1, 1       # Уменьшаем счетчик оставшихся клеток
-#     bnz loop_clear_player # Если r1 не ноль, повторяем цикл
+loop_clear_player:
+    stb r0, r2       # Записываем 0 в память по адресу из r0
+    add r0, 1       # Увеличиваем адрес на 1 (переход к след. клетке)
+    sub r1, 1       # Уменьшаем счетчик оставшихся клеток
+    bnz loop_clear_player # Если r1 не ноль, повторяем цикл
 
-#     # 2. Очищаем поле ВРАГА (заполняем нулями от 0x3000 до 0x3063)
-#     ldi r0, 0x3000   # r0 теперь указывает на начало поля врага
-#     ldi r1, 100      # Снова заряжаем счетчик на 100
+    # 2. Очищаем поле ВРАГА (заполняем нулями от 0x3000 до 0x3063)
+    ldi r0, 0x3000   # r0 теперь указывает на начало поля врага
+    ldi r1, 100      # Снова заряжаем счетчик на 100
 
-# loop_clear_enemy:
-#     stb r0, r2       # Пишем 0
-#     add r0, 1       # Адрес + 1
-#     sub r1, 1       # Счетчик - 1
-#     bnz loop_clear_enemy  # Повторяем, пока не заполним все 100 клеток
-#-------------------------------------------------
+loop_clear_enemy:
+    stb r0, r2       # Пишем 0
+    add r0, 1       # Адрес + 1
+    sub r1, 1       # Счетчик - 1
+    bnz loop_clear_enemy  # Повторяем, пока не заполним все 100 клеток
+# -------------------------------------------------
 
 # ГЕНЕРАЦИЯ КОРАБЛЕЙ ПРОТИВНИКА-----------------    
 
@@ -1121,23 +1122,23 @@ ldi r0, 0x800e
 stb r0,r0
 
 
-# РИСОВАНИЕ ДВУХ ПОЛЕЙ--------------------------
+# # РИСОВАНИЕ ДВУХ ПОЛЕЙ--------------------------
 
-ldi r1, 0x8034   # Указатель на начало поля в памяти (откуда читаем)
-ldi r4, board_state_bot   # Указатель на массив адресов матрицы (куда пишем)
-ldi r6, 10       # Счетчик рядов (10 штук)
+# ldi r1, 0x8034   # Указатель на начало поля в памяти (откуда читаем)
+# ldi r4, board_state_bot   # Указатель на массив адресов матрицы (куда пишем)
+# ldi r6, 10       # Счетчик рядов (10 штук)
 
 
-print_row:
-    ldw r4, r0
-    stw r1, r0
-    inc r1
-    inc r1
-    inc r4
-    inc r4
-    dec r6 
-    tst r6 
-    bne print_row
+# print_row:
+#     ldw r4, r0
+#     stw r1, r0
+#     inc r1
+#     inc r1
+#     inc r4
+#     inc r4
+#     dec r6 
+#     tst r6 
+#     bne print_row
 
 
 #-----------------------------------------------
@@ -2071,11 +2072,32 @@ check_fire:
     tst r7
     beq check_button_fire
 
+    ldi r1, y_hor_st
+    ldw r1, r1
+
+    ldi r0, board_state_hit # проверка на повторный удар в одно и то же место
+    add r0, r1, r0
+    add r0, r1, r0
+    ldw r0, r0
+
+    and r0, r5, r0
+
+    tst r0
+    bne check_button_fire
+
+    ldi r0, board_state_miss
+    add r0, r1, r0
+    add r0, r1, r0
+    ldw r0, r0
+
+    and r0, r5, r0
+    tst r0
+    bne check_button_fire
+
+
     ldi r0, x_hor_st
     ldw r0, r0
 
-    ldi r1, y_hor_st
-    ldw r1, r1
     move r1, r7       # r7 = Y (понадобится для записи попаданий)
 
     ldi r2, board_state_bot
@@ -2117,6 +2139,17 @@ check_fire:
     shl r4, r4, 2     # Сдвигаем ВСЮ СТРОКУ на 2 влево для матрицы 805c
     stw r3, r4        # Выводим на матрицу попаданий
 
+
+    # Проверка на убийство / конец игры
+
+    ldi r0, y_hor_st
+    ldw r0, r0
+    ldi r1, x_hor_st
+    ldw r1, r1
+    ldi r2, board_state_bot
+    jsr check_kill_or_end
+
+
     br return   # Возвращаемся к опросу (не сбрасываем курсор)
 
     miss:
@@ -2139,6 +2172,390 @@ check_fire:
     
 
 
+    check_kill_or_end:
+    # в r5 - маска корабля
+    # в r0 - координата y корабля 
+    # в r1 - координата x корабля
+    # в r2 - массив состояния кораблей
+
+    # проверяем, горизонтальный ли корабль
+    add r0, r2, r4
+    add r0, r4, r4
+
+    ldw r4, r4 # состояние корабля
+
+    # нащупываем левую границу
+
+    ldi r3, 0 # количество сдвигов влево
+
+    left:
+
+    tst r1 
+    blt next17 # значит влево нет
+
+    and r4, r5, r6 # в r6 - есть ли корабль в такой клетке
+
+    tst r6
+    beq next17 # значит корабля там нет
+
+    ldi r6, ship_mask
+    ldw r6, r7 # загружаем переменную для хранения текущей маски 
+    or r5, r7, r7 # запомнили место удара
+    stw r6, r7 # записали
+
+
+    shl r5, r5, 1 # cдвигаем
+
+    inc r3 # увеличиваем число сдвигов 
+    
+    br left
+
+
+    # нащупываем правую границу 
+
+    
+    next17:
+
+    cancel_shift: # откатываем сдвиг
+    tst r3 
+    beq end_cancel_shift
+    shr r5, r5, 1
+    dec r3
+    br cancel_shift
+    end_cancel_shift:
+
+    right:
+
+    ldi r6, 9 # проверка на край
+    cmp r1, r6
+    bgt next18 # значит влево нет
+
+    and r4, r5, r6 # в r6 - есть ли корабль в такой клетке
+    tst r6
+    beq next18 # значит корабля там нет
+
+    ldi r6, ship_mask
+    ldw r6, r7 # загружаем переменную для хранения текущей маски 
+    or r5, r7, r7 # запомнили место удара
+    stw r6, r7 # записали
+
+
+    shr r5, r5, 1 # cдвигаем
+
+    inc r3 # увеличиваем число сдвигов 
+    
+    br right
+
+
+    next18:
+
+    cancel_shift2: # откатываем сдвиг
+    tst r3 
+    beq end_cancel_shift2
+    shl r5, r5, 1
+    dec r3
+    br cancel_shift2
+    end_cancel_shift2:
+
+    # проверка, горизонтален ли корабль, если да, то в переменной ship_mask больше 1 еденицы
+    
+    ldi r3, ship_mask
+    ldw r3, r3
+
+    # в переменной ship_mask обязательно еденица там же где и в r5, но если есть еще, то корабль горизонтален,
+    # тогда просто сравним r5 и ship_mask, если равны, то корабль еденичный или вертикальный
+
+    cmp r3, r5
+    bne kill_check_hor # значит корабль вертикальный и тогда проверяем на убийство
+
+    # провекрка на вертикальный или еденичный корабль
+
+    # в r5 - маска корабля
+    # в r0 - координата y корабля 
+    # в r1 - координата x корабля
+    # в r2 - массив состояния кораблей
+
+    # проверяем, вертикальный ли корабль
+
+
+    ldi r3, 0 # количество сдвигов вверх
+
+    # нащупываем верхнюю границу
+    up:
+    tst r0
+    blt next19
+
+    add r0, r2, r4
+    add r0, r4, r4
+    ldw r4, r4 # состояние корабля
+    and r4, r5, r6 # в r6 - есть ли корабль в такой клетке
+    
+    tst r6
+    beq next19
+
+    ldi r6, y_min
+    stw r6, r0
+
+    inc r3
+
+    dec r0
+
+    br up
+
+
+
+    next19:
+
+    cancel_shift3: # откатываем Y
+    tst r3 
+    beq end_cancel_shift3
+    inc r0
+    dec r3
+    br cancel_shift3
+    end_cancel_shift3:
+
+
+
+    down:
+
+    ldi r6, 9 # проверка на край
+    cmp r0, r6
+    bgt next20 # значит влево нет
+
+    add r0, r2, r4
+    add r0, r4, r4
+    ldw r4, r4 # состояние корабля
+    and r4, r5, r6 # в r6 - есть ли корабль в такой клетке
+    
+    tst r6
+    beq next20
+
+    ldi r6, y_max
+    stw r6, r0
+
+    inc r3
+
+    inc r0
+
+    br down
+
+    next20:
+
+    cancel_shift4: # откатываем Y
+    tst r3 
+    beq end_cancel_shift4
+    dec r0
+    dec r3
+    br cancel_shift4
+    end_cancel_shift4:
+
+    br kill_check_ver
+
+
+    kill_check_hor: 
+
+    ldi r4, board_state_hit
+    add r4, r0, r4
+    add r4, r0, r4
+    ldw r4, r4 # загружаем удареные корабли
+    
+    and r4, r3, r4 # маска корабля and удареные палубы
+
+    cmp r4, r3 # если не равны, то корабль еще не убит 
+
+    bne end_check
+
+    ldi r1, 0x8020 
+    add r1, r0, r1
+    add r1, r0, r1
+
+    ldi r4, board_state_miss
+    add r4, r0, r4
+    add r4, r0, r4
+
+    ldw r4, r7
+
+    shl r3, r6, 1 # закрашиваю слева от корабля
+    or r3, r6, r3
+    shr r3, r6, 1 # закрашиваю справа от корабля
+    or r3, r6, r3
+
+    or r7, r3, r7 # сливаю с уже закрашенными
+
+    stw r4, r7 # применяю
+    stw r1, r7 # вывожу
+    
+    inc r4 # закрашиваю снизу от корабля
+    inc r4
+    inc r1
+    inc r1
+
+    ldw r4, r7
+
+    or r7, r3, r7
+
+    stw r4, r7 # применяю
+    stw r1, r7 # вывожу
+
+    dec r4 # закрашиваю сверху от корабля
+    dec r4
+    dec r4 
+    dec r4
+    dec r1
+    dec r1
+    dec r1
+    dec r1
+
+    ldw r4, r7
+
+    or r7, r3, r7
+
+    stw r4, r7 # применяю
+    stw r1, r7 # вывожу
+
+
+
+    kill_check_ver:
+    # проверка, убили ли корабль
+    ldi r4, y_min
+    ldw r4, r4
+    ldi r6, y_max
+    ldw r6, r6  
+
+    ldi r1, board_state_hit
+    add r4, r1, r1
+    add r4, r1, r1
+    dec r1
+    dec r1
+    loop25:
+    cmp r4, r6
+    bgt kill
+    
+    inc r1
+    inc r1
+
+    ldw r1, r7
+    inc r4
+
+    and r7, r5, r7 
+    tst r7
+    beq end_check
+    br loop25
+
+    # tst r4
+    # beq next21
+    # dec r4 # проверяем клетку выше, она должна быть равна 0
+
+    # add r2, r4, r4
+    # add r2, r4, r4
+
+    # ldw r4, r4 
+
+    # and r5, r4, r4
+    # tst r4
+    # beq next21 
+    # br end_check
+
+    # next21:
+
+    # tst r6
+    # beq kill
+    # inc r6 # проверяем клетку ниже, она должна быть равна 0
+
+    # add r2, r6, r6
+    # add r2, r6, r6
+    # ldw r6, r6 
+
+    # and r5, r6, r6
+    # tst r6
+    # bne end_check 
+
+    kill:
+    # выкидываем ореол
+    ldi r4, y_min
+    ldw r4, r4
+    ldi r6, y_max
+    ldw r6, r6
+
+    shl r5, r7, 1 # делаем ореол
+    or r5, r7, r5
+    shr r5, r7, 1
+    or r5, r7,r5
+
+    
+    ldi r7, board_state_miss
+    add r7, r4, r7    
+    add r7, r4, r7
+    ldi r1, 0x8020
+    add r1, r4, r1
+    add r1, r4, r1
+
+    # делаем ореол на клетку выше
+    dec r7
+    dec r7
+    dec r1
+    dec r1
+    ldw r7, r2 # состояние на клетку выше
+
+    or r2, r5, r3 # мерджим
+
+    stw r1, r3
+    stw r7, r3 # обвели на клетку выше 
+
+    inc r7 
+    inc r7
+    inc r1 
+    inc r1
+
+
+    ldw r7, r2 # состояние на клетку выше
+    or r2, r5, r3 # мерджим
+
+    stw r1, r3
+    stw r7, r3 # y_min обвели
+
+    
+    test_one_ship:
+    cmp r4, r6
+    beq one_ship # значит однопалубный или осталась одна клетка
+
+    inc r4 
+
+    inc r7
+    inc r7
+    inc r1
+    inc r1
+
+
+    ldw r7, r2 # состояние на клетку выше
+    or r2, r5, r3 # мерджим
+
+    stw r1, r3
+    stw r7, r3
+
+    br test_one_ship
+
+    one_ship:
+
+    inc r7 
+    inc r7
+    inc r1 
+    inc r1
+
+
+    ldw r7, r2 # состояние на клетку выше
+    or r2, r5, r3 # мерджим
+
+    stw r1, r3
+    stw r7, r3
+
+
+    end_check:
+    ldi r0, ship_mask
+    ldi r1, 0
+    stw r0, r1
+    rts
+    
 
     # # Подготовка к вызову функции проверки
     # ldi r0, y_hor_st
