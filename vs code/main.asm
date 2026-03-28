@@ -21,21 +21,68 @@ default_handler>
     halt
 
 
-asect 0x0e6a0
-board_state_hit: 
+asect 0x0dc
+fight_word> dc "fight!"
+
+
+asect 0x0dd0
+win_word> dc "win!"
+
+asect 0x0de0
+bot_word> dc "bot"
+
+asect 0x0df0
+player_word> dc "player"
+
+asect 0x0e0e
+bot_ship_count> dc 10
+asect 0x0e12
+player_ship_count> dc 10
+
+asect 0x0e16
+retry_count> dc 0
+
+asect 0x0e18
+pointer_miss_matrix_arr> dc 0 # указатель на адрес матрицы с миссами
+
+asect 0x0e1a
+pointer_hit_matrix_arr> dc 0 # указатель на адрес матрицы с хитами
+
+
+asect 0x0e1c
+pointer_miss_arr> dc 0 # указатель на массив с хитами, нужен, чтобы функция провреки убийства работала и с ботом и игроком
+
+asect 0x0e20
+pointer_hit_arr> dc 0 # указатель на массив с хитами, нужен, чтобы функция провреки убийства работала и с ботом и игроком
+
+asect 0x0e24
+curr_hit_x>    dc 0  # X клетки, от которой шагаем сейчас
+asect 0x0e26
+curr_hit_y>    dc 0  # Y клетки, от которой шагаем сейчас
+asect 0x0e28
+bot_state> dc 0      # 0 = Ищет (рандом), 1 = Нашел, ищет направление, 2 = Бьет по линии
+asect 0x0e2a
+hit_start_x> dc 0    # X первого попадания по текущему кораблю
+asect 0x0e2c
+hit_start_y> dc 0    # Y первого попадания
+asect 0x0e2e
+target_dir> dc 0     # Направление: 0-Вверх, 1-Вправо, 2-Вниз, 3-Влево
+
+asect 0x0e30
+board_state_miss> 
     dc 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
 
-asect 0x0e6a0
-board_state_hit: 
+asect 0x0e50
+board_state_hit>
     dc 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
 
 
-asect 0x0e6fc
+asect 0x0e6c
 num_player_dec>
     dc 20
 
 
-asect 0x0e6fe
+asect 0x0e6e
 num_bot_dec>
     dc 20
 
@@ -123,7 +170,7 @@ gen_array>
     dc "Ship generation..", 0
     
 
-asect 0x10f0  # массив с размерами кораблей
+asect 0x10ef  # массив с размерами кораблей
 ships_array>
     dc 4
     dc 3
@@ -241,28 +288,28 @@ start:
 
     # НАПИСАНИЕ "Ship generation..."---------------
 
-#     ldi r0, 0x800c
-#     ldi r1, gen_array
-#     ldi r3, 18
+    ldi r0, 0x800c
+    ldi r1, gen_array
+    ldi r3, 18
 
-#     write:
-#     ldb  r1, r2
-#     stb r0, r2
-#     inc r1
-#     dec r3
-#     tst r3
-#     bnz write
+    write:
+    ldb  r1, r2
+    stb r0, r2
+    inc r1
+    dec r3
+    tst r3
+    bnz write
 
 
 
-#     #----------------------------------------------
-#     ldi r0, 0x7000   # 1. Загружаем нужный адрес в обычный регистр r0
-#     stsp r0          # 2. Специальной командой переносим значение из r0 в sp 
+    #----------------------------------------------
+    ldi r0, 0x7000   # 1. Загружаем нужный адрес в обычный регистр r0
+    stsp r0          # 2. Специальной командой переносим значение из r0 в sp 
 
-#     ldi r0, 0x8004  # ИСТОЧНИК ДАННЫХ: Клавиатура (Адрес 8004)
-#     ldi r1, 0x8005  # ИСТОЧНИК СТАТУСА: Клавиатура avail (Адрес 8)
-#     ldi r4, 0x8000  # ПРИЕМНИК: Экран TTY 1 (Адрес 8000)
-#     ldi r3, 1       # Маска
+    ldi r0, 0x8004  # ИСТОЧНИК ДАННЫХ: Клавиатура (Адрес 8004)
+    ldi r1, 0x8005  # ИСТОЧНИК СТАТУСА: Клавиатура avail (Адрес 8)
+    ldi r4, 0x8000  # ПРИЕМНИК: Экран TTY 1 (Адрес 8000)
+    ldi r3, 1       # Маска
     
 
 # # СОЗДАНИЕ ПОЛЕЙ--------------------------------
@@ -277,832 +324,833 @@ start:
 
 # # ГЕНЕРАЦИЯ КОРАБЛЕЙ ПРОТИВНИКА-----------------    
 
-#     ldi r1, ships_array  # указатель на массив с размерами кораблей
-#     ldi r3, 10 # счетчик для необходимого кол-ва кораблей
+    ldi r1, ships_array  # указатель на массив с размерами кораблей
+    ldi r3, 10 # счетчик для необходимого кол-ва кораблей
 
-#     rand:
-#     ldi r0, 10 # для модуля
-#     tst r3
-#     bz exit # все, расставили
+    rand:
+    ldi r0, 10 # для модуля
+    tst r3
+    bz exit # все, расставили
 
-#     ldi r2, 0x800a
+    ldi r2, 0x800a
 
-#     ldb r2, r5 # сгенерированное число X
+    ldb r2, r5 # сгенерированное число X
     
-#     ldb r2, r6 # сгенерированное число Y
+    ldb r2, r6 # сгенерированное число Y
 
-#     ldi r2, 0x000f
-#     and r5, r2, r5
-#     and r6, r2, r6
+    ldi r2, 0x000f
+    and r5, r2, r5
+    and r6, r2, r6
 
-# #------------------------------
-#     mod10X:# остаток для координаты X
+#------------------------------
+    mod10X:# остаток для координаты X
     
-#     cmp r5, r0
+    cmp r5, r0
 
-#     blt mod10Y # взяли остаток на 10
+    blt mod10Y # взяли остаток на 10
 
-#     sub r5, r0, r5
+    sub r5, r0, r5
 
-#     br mod10X
+    br mod10X
     
 
-#     mod10Y: # остаток для координаты Y
+    mod10Y: # остаток для координаты Y
 
-#     cmp r6, r0
+    cmp r6, r0
 
-#     blt good # взяли остаток на 10
+    blt good # взяли остаток на 10
 
-#     sub r6, r0, r6
+    sub r6, r0, r6
 
-#     br mod10Y
+    br mod10Y
     
-#     # r5 - X
-#     # r6 - Y
-#     # r1 - указатель на массив с размерами кораблей
-#     # r3 - кол-во кораблей оставшееся
-# #------------------------------
+    # r5 - X
+    # r6 - Y
+    # r1 - указатель на массив с размерами кораблей
+    # r3 - кол-во кораблей оставшееся
+#------------------------------
 
-#     good:
+    good:
     
-#     ldi r2, 0x800a
+    ldi r2, 0x800a
     
-#     ldb r2, r4 # число для направления четное - по горизонтали, нечет - по вертикали
+    ldb r2, r4 # число для направления четное - по горизонтали, нечет - по вертикали
 
-#     ldi r7, 1
+    ldi r7, 1
 
-#     # ldi r5, 0
-#     # ldi r6, 0
+    # ldi r5, 0
+    # ldi r6, 0
 
-#     and r7, r4, r4
+    and r7, r4, r4
 
-#     tst r4
-#     bz horizontal
-#     br vertical 
+    tst r4
+    bz horizontal
+    br vertical 
 
 
-# #------------------------------
-#     vertical:
-#     ldw r1, r4 # загружаем в регистр 4 размер корабля
+#------------------------------
+    vertical:
+    ldw r1, r4 # загружаем в регистр 4 размер корабля
 
       
-#     # проверка, выйдет ли корабль за пределы поля
+    # проверка, выйдет ли корабль за пределы поля
     
 
-#     check_vert:
-#     move r6, r2 # скопировали начальную точку
+    check_vert:
+    move r6, r2 # скопировали начальную точку
 
-#     ldi r7, 10
-#     add r2, r4, r2
-#     cmp r2, r7
-#     bgt rand #значит вышли за пределы
+    ldi r7, 10
+    add r2, r4, r2
+    cmp r2, r7
+    bgt rand #значит вышли за пределы
  
-#     # не вышли за предел
-#     # ДЛЯ ПОЛУЧЕНИЯ НОМЕРА КЛЕТКИ НУЖНО MOVE X -> r0, Y -> r2. РЕЗУЛЬТАТ В r7
+    # не вышли за предел
+    # ДЛЯ ПОЛУЧЕНИЯ НОМЕРА КЛЕТКИ НУЖНО MOVE X -> r0, Y -> r2. РЕЗУЛЬТАТ В r7
 
-#     # проверка самой клетки---------
+    # проверка самой клетки---------
 
-#     # move r5, r0
-#     # move r6, r2
-#     # jsr get_cell_index
+    # move r5, r0
+    # move r6, r2
+    # jsr get_cell_index
 
-#     ldi r0, board_state_bot
-#     add r0, r6, r0
-#     add r0, r6, r0
-#     ldw r0, r0 # в r0 - битовая строка
+    ldi r0, board_state_bot
+    add r0, r6, r0
+    add r0, r6, r0
+    ldw r0, r0 # в r0 - битовая строка
 
-#     ldi r2, 9
+    ldi r2, 9
 
-#     sub r2, r5, r2 # в r2 сдвиг необходимый влево
+    sub r2, r5, r2 # в r2 сдвиг необходимый влево
 
-#     jsr check_field
+    jsr check_field
 
 
-#     # ldi r0, 0x3000
-#     # add r0, r7, r0
-#     # ldb r0, r7
-#     tst r0
-#     bnz rand
-#     #-------------------------------
+    # ldi r0, 0x3000
+    # add r0, r7, r0
+    # ldb r0, r7
+    tst r0
+    bnz rand
+    #-------------------------------
 
-#     # проверка клетки справа--------
-#     # проверка на край
-#     ldi r7, 9
-#     cmp r5, r7
-#     beq next1
-#     #-----------------
+    # проверка клетки справа--------
+    # проверка на край
+    ldi r7, 9
+    cmp r5, r7
+    beq next1
+    #-----------------
 
-#     # ldi r7, 1
+    # ldi r7, 1
 
-#     # add r5, r7, r0 # x + 1 -> r0
-#     # move r6, r2 # y -> r2
+    # add r5, r7, r0 # x + 1 -> r0
+    # move r6, r2 # y -> r2
     
-#     # jsr get_cell_index # r7 - клетка справа  
+    # jsr get_cell_index # r7 - клетка справа  
 
 
     
-#     ldi r0, board_state_bot
-#     add r0, r6, r0
-#     add r0, r6, r0
-#     ldw r0, r0 # в r0 - битовая строка
+    ldi r0, board_state_bot
+    add r0, r6, r0
+    add r0, r6, r0
+    ldw r0, r0 # в r0 - битовая строка
 
-#     ldi r2, 9
+    ldi r2, 9
 
-#     sub r2, r5, r2 # в r2 сдвиг необходимый
+    sub r2, r5, r2 # в r2 сдвиг необходимый
 
-#     dec r2 # так как правую клетку проверяем
+    dec r2 # так как правую клетку проверяем
 
-#     jsr check_field
-
-
+    jsr check_field
 
 
-#     # ldi r0, 0x3000
-#     # add r0, r7, r0
-#     # ldb r0, r7
 
-#     tst r0
-#     bnz rand
-#     #-------------------------------- 
 
-#     next1:
+    # ldi r0, 0x3000
+    # add r0, r7, r0
+    # ldb r0, r7
 
-#     # проверка клетки слева--------
-#     # проверка на край
-#     ldi r7, 0
-#     cmp r5, r7
-#     beq next2
-#     #-----------------
+    tst r0
+    bnz rand
+    #-------------------------------- 
 
-#     # ldi r7, 1
+    next1:
 
-#     # sub r5, r7, r0 # x - 1 -> r0
-#     # move r6, r2 # y -> r2
+    # проверка клетки слева--------
+    # проверка на край
+    ldi r7, 0
+    cmp r5, r7
+    beq next2
+    #-----------------
+
+    # ldi r7, 1
+
+    # sub r5, r7, r0 # x - 1 -> r0
+    # move r6, r2 # y -> r2
     
-#     # jsr get_cell_index # r7 - клетка слева  
+    # jsr get_cell_index # r7 - клетка слева  
 
 
-#     ldi r0, board_state_bot
-#     add r0, r6, r0
-#     add r0, r6, r0
-#     ldw r0, r0 # в r0 - битовая строка
+    ldi r0, board_state_bot
+    add r0, r6, r0
+    add r0, r6, r0
+    ldw r0, r0 # в r0 - битовая строка
 
-#     ldi r2, 9
+    ldi r2, 9
 
-#     sub r2, r5, r2 # в r2 сдвиг необходимый влево
+    sub r2, r5, r2 # в r2 сдвиг необходимый влево
 
-#     inc r2 # так как левую клетку проверяем
+    inc r2 # так как левую клетку проверяем
     
-#     jsr check_field
+    jsr check_field
 
 
 
-#     # ldi r0, 0x3000
-#     # add r0, r7, r0
-#     # ldb r0, r7
-#     tst r0 
-#     bnz rand
-#     #-------------------------------- 
+    # ldi r0, 0x3000
+    # add r0, r7, r0
+    # ldb r0, r7
+    tst r0 
+    bnz rand
+    #-------------------------------- 
 
-#     next2:
+    next2:
 
-#     # проверка клетки сверху--------
-#     # проверка на край
-#     ldi r7, 0
-#     cmp r6, r7
-#     beq next3
-#     #-----------------
+    # проверка клетки сверху--------
+    # проверка на край
+    ldi r7, 0
+    cmp r6, r7
+    beq next3
+    #-----------------
 
-#     # ldi r7, 1
+    # ldi r7, 1
 
-#     # sub r6, r7, r2 # y - 1 -> r2
-#     # move r5, r0 # x -> r3
+    # sub r6, r7, r2 # y - 1 -> r2
+    # move r5, r0 # x -> r3
     
-#     # jsr get_cell_index # r7 - клетка сверху  
-    
-
-#     ldi r0, board_state_bot
-#     add r0, r6, r0
-#     add r0, r6, r0
-#     dec r0
-#     dec r0
-#     ldw r0, r0 # в r0 - битовая строка
-
-#     ldi r2, 9
-
-#     sub r2, r5, r2 # в r2 сдвиг необходимый влево
-
-#     jsr check_field
-
-
-#     # ldi r0, 0x3000
-#     # add r0, r7, r0
-#     # ldb r0, r7
-#     tst r0
-#     bnz rand
-#     #-------------------------------- 
-
-#     next3:
-
-#     # проверка клетки снизу--------
-#     # проверка на край
-#     ldi r7, 9
-#     cmp r6, r7
-#     beq next4
-#     #-----------------
-
-#     # ldi r7, 1
-
-#     # add r6, r7, r2 # y + 1 -> r2
-#     # move r5, r0 # x -> r3
-    
-#     # jsr get_cell_index # r7 - клетка снизу 
-
-
-#     ldi r0, board_state_bot
-#     add r0, r6, r0
-#     add r0, r6, r0
-#     inc r0
-#     inc r0
-#     ldw r0, r0 # в r0 - битовая строка
-
-#     ldi r2, 9
-
-#     sub r2, r5, r2 # в r2 сдвиг необходимый влево
-#     jsr check_field
-    
-#     # ldi r0, 0x3000
-#     # add r0, r7, r0
-#     # ldb r0, r7
-#     tst r0 
-#     bnz rand
-#     #-------------------------------- 
-
-#     next4:
-
-#     # проверка клетки справа сверху--------
-#     # проверка на край
-#     ldi r7, 9
-#     cmp r5, r7
-#     beq next5
-#     ldi r7, 0
-#     cmp r6, r7
-#     beq next5
-#     #-----------------
-
-#     # ldi r7, 1
-
-#     # add r5, r7, r0 # x + 1 -> r0
-#     # sub r6, r7, r2 # y - 1 -> r2
-    
-#     # jsr get_cell_index # r7 - клетка справа    
+    # jsr get_cell_index # r7 - клетка сверху  
     
 
-#     ldi r0, board_state_bot
-#     add r0, r6, r0
-#     add r0, r6, r0
-#     dec r0
-#     dec r0
-#     ldw r0, r0 # в r0 - битовая строка
+    ldi r0, board_state_bot
+    add r0, r6, r0
+    add r0, r6, r0
+    dec r0
+    dec r0
+    ldw r0, r0 # в r0 - битовая строка
 
-#     ldi r2, 9
+    ldi r2, 9
 
-#     sub r2, r5, r2 # в r2 сдвиг необходимый влево
+    sub r2, r5, r2 # в r2 сдвиг необходимый влево
 
-#     dec r2
-#     jsr check_field
-
+    jsr check_field
 
 
+    # ldi r0, 0x3000
+    # add r0, r7, r0
+    # ldb r0, r7
+    tst r0
+    bnz rand
+    #-------------------------------- 
 
-#     # ldi r0, 0x3000
-#     # add r0, r7, r0
-#     # ldb r0, r7
-#     tst r0
-#     bnz rand
-#     #-------------------------------- 
+    next3:
 
-#     next5:
+    # проверка клетки снизу--------
+    # проверка на край
+    ldi r7, 9
+    cmp r6, r7
+    beq next4
+    #-----------------
 
-#     # проверка клетки слева сверху--------
-#     # проверка на край
-#     ldi r7, 0
-#     cmp r5, r7
-#     beq next6
-#     cmp r6, r7
-#     beq next6
-#     #-----------------
+    # ldi r7, 1
 
-#     # ldi r7, 1
-
-#     # sub r5, r7, r0 # x - 1 -> r0
-#     # sub r6, r7, r2 # y - 1 -> r2
+    # add r6, r7, r2 # y + 1 -> r2
+    # move r5, r0 # x -> r3
     
-#     # jsr get_cell_index # r7 - клетка справа  
+    # jsr get_cell_index # r7 - клетка снизу 
 
 
-#     ldi r0, board_state_bot
-#     add r0, r6, r0
-#     add r0, r6, r0
-#     dec r0
-#     dec r0
-#     ldw r0, r0 # в r0 - битовая строка
+    ldi r0, board_state_bot
+    add r0, r6, r0
+    add r0, r6, r0
+    inc r0
+    inc r0
+    ldw r0, r0 # в r0 - битовая строка
 
-#     ldi r2, 9
+    ldi r2, 9
 
-#     sub r2, r5, r2 # в r2 сдвиг необходимый влево
-
-#     inc r2
-#    jsr check_field
-
-
-
-#     # ldi r0, 0x3000
-#     # add r0, r7, r0
-#     # ldb r0, r7
-#     tst r0
-#     bnz rand
-#     #-------------------------------- 
-
-#     next6:
-
-#     # проверка клетки справа снизу--------
-#     # проверка на край
-#     ldi r7, 9
-#     cmp r5, r7
-#     beq next7
-#     cmp r6, r7
-#     beq next7
-#     #-----------------
-
-#     # ldi r7, 1
-
-#     # add r5, r7, r0 # x + 1 -> r0
-#     # add r6, r7, r2 # y + 1-> r2
+    sub r2, r5, r2 # в r2 сдвиг необходимый влево
+    jsr check_field
     
-#     # jsr get_cell_index # r7 - клетка справа    
+    # ldi r0, 0x3000
+    # add r0, r7, r0
+    # ldb r0, r7
+    tst r0 
+    bnz rand
+    #-------------------------------- 
+
+    next4:
+
+    # проверка клетки справа сверху--------
+    # проверка на край
+    ldi r7, 9
+    cmp r5, r7
+    beq next5
+    ldi r7, 0
+    cmp r6, r7
+    beq next5
+    #-----------------
+
+    # ldi r7, 1
+
+    # add r5, r7, r0 # x + 1 -> r0
+    # sub r6, r7, r2 # y - 1 -> r2
     
-#     ldi r0, board_state_bot
-#     add r0, r6, r0
-#     add r0, r6, r0
-#     inc r0
-#     inc r0
-#     ldw r0, r0 # в r0 - битовая строка
-
-#     ldi r2, 9
-
-#     sub r2, r5, r2 # в r2 сдвиг необходимый влево
-
-#     dec r2
-#     jsr check_field
-
-
-
-
-
-#     # ldi r0, 0x3000
-#     # add r0, r7, r0
-#     # ldb r0, r7
-#     tst r0
-#     bnz rand
-#     #-------------------------------- 
-
-#     next7:
-
-#     # проверка клетки слева снизу--------
-#     # проверка на край
-#     ldi r7, 0
-#     cmp r5, r7
-#     beq next8
-#     ldi r7, 9
-#     cmp r6, r7
-#     beq next8
-#     #-----------------
-
-#     # ldi r7, 1
-
-#     # sub r5, r7, r0 # x - 1 -> r0
-#     # add r6, r7, r2 # y + 1 -> r2
+    # jsr get_cell_index # r7 - клетка справа    
     
-#     # jsr get_cell_index # r7 - клетка справа  
+
+    ldi r0, board_state_bot
+    add r0, r6, r0
+    add r0, r6, r0
+    dec r0
+    dec r0
+    ldw r0, r0 # в r0 - битовая строка
+
+    ldi r2, 9
+
+    sub r2, r5, r2 # в r2 сдвиг необходимый влево
+
+    dec r2
+    jsr check_field
 
 
-#     ldi r0, board_state_bot
-#     add r0, r6, r0
-#     add r0, r6, r0
-#     inc r0
-#     inc r0
-#     ldw r0, r0 # в r0 - битовая строка
-
-#     ldi r2, 9
-
-#     sub r2, r5, r2 # в r2 сдвиг необходимый влево
-
-#     inc r2
-#     jsr check_field
 
 
-#     # ldi r0, 0x3000
-#     # add r0, r7, r0
-#     # ldb r0, r7
-#     tst r0
-#     bnz rand
-#     #-------------------------------- 
+    # ldi r0, 0x3000
+    # add r0, r7, r0
+    # ldb r0, r7
+    tst r0
+    bnz rand
+    #-------------------------------- 
 
-#     next8:
-#     dec r4
+    next5:
 
-#     tst r4
+    # проверка клетки слева сверху--------
+    # проверка на край
+    ldi r7, 0
+    cmp r5, r7
+    beq next6
+    cmp r6, r7
+    beq next6
+    #-----------------
+
+    # ldi r7, 1
+
+    # sub r5, r7, r0 # x - 1 -> r0
+    # sub r6, r7, r2 # y - 1 -> r2
     
-#     bz place_ship
-
-#     inc r6
-#     br check_vert
-
-#     place_ship:
-
-#     ldw r1, r4
-#     inc r6
-#     sub r6, r4, r6 # вернули начальную координату y
+    # jsr get_cell_index # r7 - клетка справа  
 
 
-#     place:
+    ldi r0, board_state_bot
+    add r0, r6, r0
+    add r0, r6, r0
+    dec r0
+    dec r0
+    ldw r0, r0 # в r0 - битовая строка
 
-#     tst r4
+    ldi r2, 9
 
-#     bz done
+    sub r2, r5, r2 # в r2 сдвиг необходимый влево
 
-#     ldi r0, board_state_bot
-#     add r0, r6, r0
-#     add r0, r6, r0
+    inc r2
+   jsr check_field
 
-#     ldw r0, r0
 
-#     ldi r2, 0b1000000000
 
-#     move r5, r7 
+    # ldi r0, 0x3000
+    # add r0, r7, r0
+    # ldb r0, r7
+    tst r0
+    bnz rand
+    #-------------------------------- 
 
-#     loop14:
-#     tst r7
-#     beq q 
-#     shr r2, r2, 1 
-#     dec r7
-#     br loop14
-#     q:
+    next6:
+
+    # проверка клетки справа снизу--------
+    # проверка на край
+    ldi r7, 9
+    cmp r5, r7
+    beq next7
+    cmp r6, r7
+    beq next7
+    #-----------------
+
+    # ldi r7, 1
+
+    # add r5, r7, r0 # x + 1 -> r0
+    # add r6, r7, r2 # y + 1-> r2
     
-#     or r0, r2, r2
+    # jsr get_cell_index # r7 - клетка справа    
     
-#     ldi r0, board_state_bot 
-#     add r0, r6, r0
-#     add r0, r6, r0
+    ldi r0, board_state_bot
+    add r0, r6, r0
+    add r0, r6, r0
+    inc r0
+    inc r0
+    ldw r0, r0 # в r0 - битовая строка
 
-#     stw r0, r2
+    ldi r2, 9
 
-#     dec r4
-#     inc r6
-#     br place
+    sub r2, r5, r2 # в r2 сдвиг необходимый влево
 
-#     done:
+    dec r2
+    jsr check_field
 
-#     dec r3
-#     inc r1
-#     inc r1
-#     br rand
 
-# #------------------------------
 
-#     horizontal:
-#     ldw r1, r4 # загружаем в регистр 4 размер корабля
+
+
+    # ldi r0, 0x3000
+    # add r0, r7, r0
+    # ldb r0, r7
+    tst r0
+    bnz rand
+    #-------------------------------- 
+
+    next7:
+
+    # проверка клетки слева снизу--------
+    # проверка на край
+    ldi r7, 0
+    cmp r5, r7
+    beq next8
+    ldi r7, 9
+    cmp r6, r7
+    beq next8
+    #-----------------
+
+    # ldi r7, 1
+
+    # sub r5, r7, r0 # x - 1 -> r0
+    # add r6, r7, r2 # y + 1 -> r2
+    
+    # jsr get_cell_index # r7 - клетка справа  
+
+
+    ldi r0, board_state_bot
+    add r0, r6, r0
+    add r0, r6, r0
+    inc r0
+    inc r0
+    ldw r0, r0 # в r0 - битовая строка
+
+    ldi r2, 9
+
+    sub r2, r5, r2 # в r2 сдвиг необходимый влево
+
+    inc r2
+    jsr check_field
+
+
+    # ldi r0, 0x3000
+    # add r0, r7, r0
+    # ldb r0, r7
+    tst r0
+    bnz rand
+    #-------------------------------- 
+
+    next8:
+    dec r4
+
+    tst r4
+    
+    bz place_ship
+
+    inc r6
+    br check_vert
+
+    place_ship:
+
+    ldw r1, r4
+    inc r6
+    sub r6, r4, r6 # вернули начальную координату y
+
+
+    place:
+
+    tst r4
+
+    bz done
+
+    ldi r0, board_state_bot
+    add r0, r6, r0
+    add r0, r6, r0
+
+    ldw r0, r0
+
+    ldi r2, 0b1000000000
+
+    move r5, r7 
+
+    loop14:
+    tst r7
+    beq q 
+    shr r2, r2, 1 
+    dec r7
+    br loop14
+    q:
+    
+    or r0, r2, r2
+    
+    ldi r0, board_state_bot 
+    add r0, r6, r0
+    add r0, r6, r0
+
+    stw r0, r2
+
+    dec r4
+    inc r6
+    br place
+
+    done:
+
+    dec r3
+    inc r1
+    inc r1
+    br rand
+
+#------------------------------
+
+    horizontal:
+    ldw r1, r4 # загружаем в регистр 4 размер корабля
 
       
-#     # проверка, выйдет ли корабль за пределы поля
+    # проверка, выйдет ли корабль за пределы поля
     
-#     # move r4, r6  #скопировали размер корабля
+    # move r4, r6  #скопировали размер корабля
 
-#     check_horizont:
-#     move r5, r2 # скопировали начальную точку
+    check_horizont:
+    move r5, r2 # скопировали начальную точку
 
-#     ldi r7, 10
-#     add r2, r4, r2
-#     cmp r2, r7
-#     bgt rand #значит вышли за пределы
+    ldi r7, 10
+    add r2, r4, r2
+    cmp r2, r7
+    bgt rand #значит вышли за пределы
  
-#     # не вышли за предел
-#     # ДЛЯ ПОЛУЧЕНИЯ НОМЕРА КЛЕТКИ НУЖНО MOVE X -> r0, Y -> r2. РЕЗУЛЬТАТ В r7
+    # не вышли за предел
+    # ДЛЯ ПОЛУЧЕНИЯ НОМЕРА КЛЕТКИ НУЖНО MOVE X -> r0, Y -> r2. РЕЗУЛЬТАТ В r7
 
-#     # проверка самой клетки---------
+    # проверка самой клетки---------
 
-#     ldi r0, board_state_bot
-#     add r0, r6, r0
-#     add r0, r6, r0
+    ldi r0, board_state_bot
+    add r0, r6, r0
+    add r0, r6, r0
    
-#     ldw r0, r0 # в r0 - битовая строка
+    ldw r0, r0 # в r0 - битовая строка
 
-#     ldi r2, 9
+    ldi r2, 9
 
-#     sub r2, r5, r2 # в r2 сдвиг необходимый влево
-
-    
-#     jsr check_field
-
-
-#     tst r0
-#     bnz rand
-#     #-------------------------------
-
-#     # проверка клетки справа--------
-#     # проверка на край
-#     ldi r7, 9
-#     cmp r5, r7
-#     beq next9
-#     #-----------------
+    sub r2, r5, r2 # в r2 сдвиг необходимый влево
 
     
-#     ldi r0, board_state_bot
-#     add r0, r6, r0
-#     add r0, r6, r0
-#     ldw r0, r0 # в r0 - битовая строка
+    jsr check_field
 
-#     ldi r2, 9
 
-#     sub r2, r5, r2 # в r2 сдвиг необходимый влево
+    tst r0
+    bnz rand
+    #-------------------------------
 
-#     dec r2
-#     jsr check_field
+    # проверка клетки справа--------
+    # проверка на край
+    ldi r7, 9
+    cmp r5, r7
+    beq next9
+    #-----------------
+
+    
+    ldi r0, board_state_bot
+    add r0, r6, r0
+    add r0, r6, r0
+    ldw r0, r0 # в r0 - битовая строка
+
+    ldi r2, 9
+
+    sub r2, r5, r2 # в r2 сдвиг необходимый влево
+
+    dec r2
+    jsr check_field
  
-#     tst r0 
-#     bnz rand
-#     #-------------------------------- 
+    tst r0 
+    bnz rand
+    #-------------------------------- 
 
-#     next9:
+    next9:
 
-#     # проверка клетки слева--------
-#     # проверка на край
-#     ldi r7, 0
-#     cmp r5, r7
-#     beq next10
-#     #-----------------
+    # проверка клетки слева--------
+    # проверка на край
+    ldi r7, 0
+    cmp r5, r7
+    beq next10
+    #-----------------
 
-#     ldi r0, board_state_bot
-#     add r0, r6, r0
-#     add r0, r6, r0
-#     ldw r0, r0 # в r0 - битовая строка
+    ldi r0, board_state_bot
+    add r0, r6, r0
+    add r0, r6, r0
+    ldw r0, r0 # в r0 - битовая строка
 
-#     ldi r2, 9
+    ldi r2, 9
 
-#     sub r2, r5, r2 # в r2 сдвиг необходимый влево
+    sub r2, r5, r2 # в r2 сдвиг необходимый влево
 
-#     inc r2
-#     jsr check_field
+    inc r2
+    jsr check_field
 
-#     tst r0
-#     bnz rand
-#     #-------------------------------- 
+    tst r0
+    bnz rand
+    #-------------------------------- 
 
-#     next10:
+    next10:
 
-#     # проверка клетки сверху--------
-#     # проверка на край
-#     ldi r7, 0
-#     cmp r6, r7
-#     beq next11
-#     #-----------------
+    # проверка клетки сверху--------
+    # проверка на край
+    ldi r7, 0
+    cmp r6, r7
+    beq next11
+    #-----------------
 
-#     ldi r0, board_state_bot
-#     add r0, r6, r0
-#     add r0, r6, r0
-#     dec r0
-#     dec r0
-#     ldw r0, r0 # в r0 - битовая строка
+    ldi r0, board_state_bot
+    add r0, r6, r0
+    add r0, r6, r0
+    dec r0
+    dec r0
+    ldw r0, r0 # в r0 - битовая строка
 
-#     ldi r2, 9
+    ldi r2, 9
 
-#     sub r2, r5, r2 # в r2 сдвиг необходимый влево
+    sub r2, r5, r2 # в r2 сдвиг необходимый влево
 
-#     jsr check_field
+    jsr check_field
 
-#     tst r0
-#     bnz rand
-#     #-------------------------------- 
+    tst r0
+    bnz rand
+    #-------------------------------- 
 
-#     next11:
+    next11:
 
-#     # проверка клетки снизу--------
-#     # проверка на край
-#     ldi r7, 9
-#     cmp r6, r7
-#     beq next12
-#     #-----------------
+    # проверка клетки снизу--------
+    # проверка на край
+    ldi r7, 9
+    cmp r6, r7
+    beq next12
+    #-----------------
 
-#     ldi r0, board_state_bot
-#     add r0, r6, r0
-#     add r0, r6, r0
-#     inc r0
-#     inc r0
-#     ldw r0, r0 # в r0 - битовая строка
+    ldi r0, board_state_bot
+    add r0, r6, r0
+    add r0, r6, r0
+    inc r0
+    inc r0
+    ldw r0, r0 # в r0 - битовая строка
 
-#     ldi r2, 9
+    ldi r2, 9
 
-#     sub r2, r5, r2 # в r2 сдвиг необходимый влево
+    sub r2, r5, r2 # в r2 сдвиг необходимый влево
 
-#     jsr check_field
+    jsr check_field
 
-#     tst r0 
-#     bnz rand
-#     #-------------------------------- 
+    tst r0 
+    bnz rand
+    #-------------------------------- 
 
-#     next12:
+    next12:
 
-#     # проверка клетки справа сверху--------
-#     # проверка на край
-#     ldi r7, 9
-#     cmp r5, r7
-#     beq next13
-#     ldi r7, 0
-#     cmp r6, r7
-#     beq next13
-#     #-----------------
+    # проверка клетки справа сверху--------
+    # проверка на край
+    ldi r7, 9
+    cmp r5, r7
+    beq next13
+    ldi r7, 0
+    cmp r6, r7
+    beq next13
+    #-----------------
 
 
-#     ldi r0, board_state_bot
-#     add r0, r6, r0
-#     add r0, r6, r0
-#     dec r0
-#     dec r0
-#     ldw r0, r0 # в r0 - битовая строка
+    ldi r0, board_state_bot
+    add r0, r6, r0
+    add r0, r6, r0
+    dec r0
+    dec r0
+    ldw r0, r0 # в r0 - битовая строка
 
-#     ldi r2, 9
+    ldi r2, 9
 
-#     sub r2, r5, r2 # в r2 сдвиг необходимый влево
+    sub r2, r5, r2 # в r2 сдвиг необходимый влево
 
-#     dec r2
-#     jsr check_field
+    dec r2
+    jsr check_field
 
-#     tst r0 
-#     bnz rand
-#     #-------------------------------- 
+    tst r0 
+    bnz rand
+    #-------------------------------- 
 
-#     next13:
+    next13:
 
-#     # проверка клетки слева сверху--------
-#     # проверка на край
-#     ldi r7, 0
-#     cmp r5, r7
-#     beq next14
-#     cmp r6, r7
-#     beq next14
-#     #-----------------
+    # проверка клетки слева сверху--------
+    # проверка на край
+    ldi r7, 0
+    cmp r5, r7
+    beq next14
+    cmp r6, r7
+    beq next14
+    #-----------------
 
     
-#     ldi r0, board_state_bot
-#     add r0, r6, r0
-#     add r0, r6, r0
-#     dec r0
-#     dec r0
-#     ldw r0, r0 # в r0 - битовая строка
+    ldi r0, board_state_bot
+    add r0, r6, r0
+    add r0, r6, r0
+    dec r0
+    dec r0
+    ldw r0, r0 # в r0 - битовая строка
 
-#     ldi r2, 9
+    ldi r2, 9
 
-#     sub r2, r5, r2 # в r2 сдвиг необходимый влево
+    sub r2, r5, r2 # в r2 сдвиг необходимый влево
 
-#     inc r2
-#     jsr check_field
+    inc r2
+    jsr check_field
 
-#     tst r0 
-#     bnz rand
-#     #-------------------------------- 
+    tst r0 
+    bnz rand
+    #-------------------------------- 
 
-#     next14:
+    next14:
 
-#     # проверка клетки справа снизу--------
-#     # проверка на край
-#     ldi r7, 9
-#     cmp r5, r7
-#     beq next15
-#     cmp r6, r7
-#     beq next15
-#     #-----------------
+    # проверка клетки справа снизу--------
+    # проверка на край
+    ldi r7, 9
+    cmp r5, r7
+    beq next15
+    cmp r6, r7
+    beq next15
+    #-----------------
     
-#     ldi r0, board_state_bot
-#     add r0, r6, r0
-#     add r0, r6, r0
-#     inc r0
-#     inc r0
-#     ldw r0, r0 # в r0 - битовая строка
+    ldi r0, board_state_bot
+    add r0, r6, r0
+    add r0, r6, r0
+    inc r0
+    inc r0
+    ldw r0, r0 # в r0 - битовая строка
 
-#     ldi r2, 9
+    ldi r2, 9
 
-#     sub r2, r5, r2 # в r2 сдвиг необходимый влево
+    sub r2, r5, r2 # в r2 сдвиг необходимый влево
 
-#     dec r2
-#     jsr check_field
+    dec r2
+    jsr check_field
  
     
   
-#     tst r0 
-#     bnz rand
-#     #-------------------------------- 
+    tst r0 
+    bnz rand
+    #-------------------------------- 
 
-#     next15:
+    next15:
 
-#     # проверка клетки слева снизу--------
-#     # проверка на край
-#     ldi r7, 0
-#     cmp r5, r7
-#     beq next16
-#     ldi r7, 9
-#     cmp r6, r7
-#     beq next16
-#     #-----------------
+    # проверка клетки слева снизу--------
+    # проверка на край
+    ldi r7, 0
+    cmp r5, r7
+    beq next16
+    ldi r7, 9
+    cmp r6, r7
+    beq next16
+    #-----------------
 
   
-#     ldi r0, board_state_bot
-#     add r0, r6, r0
-#     add r0, r6, r0
-#     inc r0
-#     inc r0
-#     ldw r0, r0 # в r0 - битовая строка
+    ldi r0, board_state_bot
+    add r0, r6, r0
+    add r0, r6, r0
+    inc r0
+    inc r0
+    ldw r0, r0 # в r0 - битовая строка
 
-#     ldi r2, 9
+    ldi r2, 9
 
-#     sub r2, r5, r2 # в r2 сдвиг необходимый влево
+    sub r2, r5, r2 # в r2 сдвиг необходимый влево
 
-#     inc r2
-#     jsr check_field
+    inc r2
+    jsr check_field
     
 
-#     tst r0 
-#     bnz rand
-#     #-------------------------------- 
+    tst r0 
+    bnz rand
+    #-------------------------------- 
 
-#     next16:
+    next16:
 
-#     dec r4
+    dec r4
 
-#     tst r4
+    tst r4
     
-#     bz place_ship_hor
+    bz place_ship_hor
 
-#     inc r5
-#     br check_horizont
+    inc r5
+    br check_horizont
 
-#     place_ship_hor:
+    place_ship_hor:
 
-#     ldw r1, r4
-#     inc r5
-#     sub r5, r4, r5 # вернули начальную координату x
+    ldw r1, r4
+    inc r5
+    sub r5, r4, r5 # вернули начальную координату x
 
-#     place_hor:
-#     tst r4
-#     bz done_hor
+    place_hor:
+    tst r4
+    bz done_hor
 
-#     # 1. Читаем текущую строку в r0
-#     ldi r0, board_state_bot
-#     add r0, r6, r0
-#     add r0, r6, r0
-#     ldw r0, r0
+    # 1. Читаем текущую строку в r0
+    ldi r0, board_state_bot
+    add r0, r6, r0
+    add r0, r6, r0
+    ldw r0, r0
 
-#     # 2. Формируем битовую маску для текущего X (r5)
-#     ldi r2, 0b1000000000
-#     move r5, r7 
+    # 2. Формируем битовую маску для текущего X (r5)
+    ldi r2, 0b1000000000
+    move r5, r7 
     
-#     tst r7
-#     beq skip_shift_hor
-#     loop_shift_hor:
-#     shr r2, r2, 1 
-#     dec r7
-#     bne loop_shift_hor
-#     skip_shift_hor:
+    tst r7
+    beq skip_shift_hor
+    loop_shift_hor:
+    shr r2, r2, 1 
+    dec r7
+    bne loop_shift_hor
+    skip_shift_hor:
     
-#     # 3. Накладываем маску на строку доски
-#     or r0, r2, r2
+    # 3. Накладываем маску на строку доски
+    or r0, r2, r2
     
-#     # 4. Записываем обратно в память бота
-#     ldi r0, board_state_bot 
-#     add r0, r6, r0
-#     add r0, r6, r0
-#     stw r0, r2
+    # 4. Записываем обратно в память бота
+    ldi r0, board_state_bot 
+    add r0, r6, r0
+    add r0, r6, r0
+    stw r0, r2
 
-#     # 5. Переходим к следующей клетке (сдвигаемся по X)
-#     dec r4
-#     inc r5
-#     br place_hor
+    # 5. Переходим к следующей клетке (сдвигаемся по X)
+    dec r4
+    inc r5
+    br place_hor
 
-#     done_hor:
-#     dec r3         # Уменьшаем счетчик оставшихся кораблей
-#     inc r1
-#     inc r1         # Сдвигаем указатель на следующий размер
-#     br rand        # Генерируем следующий
+    done_hor:
+    dec r3         # Уменьшаем счетчик оставшихся кораблей
+    inc r1
+    inc r1         # Сдвигаем указатель на следующий размер
+    br rand        # Генерируем следующий
     
-# #-----------------------------------------------
-# exit:
+#-----------------------------------------------
+exit:
 
-# ldi r0, 0x800e
+ldi r0, 0x800e
 
-# stb r0,r0
+stb r0,r0
 
 
-# # РИСОВАНИЕ ДВУХ ПОЛЕЙ--------------------------
+
+# РИСОВАНИЕ ДВУХ ПОЛЕЙ--------------------------
 
 # ldi r1, 0x8034   # Указатель на начало поля в памяти (откуда читаем)
 # ldi r4, board_state_bot   # Указатель на массив адресов матрицы (куда пишем)
@@ -1129,691 +1177,709 @@ start:
 
 
 
-# # РАСПОЛОЖЕИЕ КОРАБЛЕЙ ИГРОКА 
+# РАСПОЛОЖЕИЕ КОРАБЛЕЙ ИГРОКА 
 
-# ldi r5, ships_array # получаем размер корабля в р6
-# ldi r6, pointer_len_ship
-# stw r6, r5
+ldi r5, ships_array # получаем размер корабля в р6
+ldi r6, pointer_len_ship
+stw r6, r5
 
-# return:
-# ldi r6, pointer_len_ship
-# ldw r6, r6
-# ldb r6, r6
+return:
+ldi r6, pointer_len_ship
+ldw r6, r6
+ldb r6, r6
 
-# ldi r0, place_array
-# ldi r1, 11
-# ldi r2, 0x800c
+ldi r0, place_array
+ldi r1, 11
+ldi r2, 0x800c
 
-# # надпись---------
-# ldi r3, 0x800e
-# stb r3, r3  
+# надпись---------
+ldi r3, 0x800e
+stb r3, r3  
 
-# tst r6
-# beq fin
-# loop3:
-# ldb r0, r3
-# stb r2, r3
+tst r6
+beq fin
+loop3:
+ldb r0, r3
+stb r2, r3
 
-# inc r0
+inc r0
 
-# dec r1
+dec r1
 
-# tst r1
-# bne loop3
+tst r1
+bne loop3
 
-# ldi r3, 48
-# add r6, r3, r3
-# stb r2, r3
+ldi r3, 48
+add r6, r3, r3
+stb r2, r3
 
-# ldi r1, 11
+ldi r1, 11
 
-# loop4:
-# ldb r0, r3
-# stb r2, r3
+loop4:
+ldb r0, r3
+stb r2, r3
 
-# inc r0
+inc r0
 
-# dec r1
+dec r1
 
-# tst r1
-# bne loop4
-# #----------------
+tst r1
+bne loop4
+#----------------
 
-# push r6 # кладем его в стек, чтобы осовободить регистр
+push r6 # кладем его в стек, чтобы осовободить регистр
 
-# ldi r7, 0b0 # для создания маски горизонтального корабля
-# ldi r3, 0b1000000000 # для добавления нулей в маску
+ldi r7, 0b0 # для создания маски горизонтального корабля
+ldi r3, 0b1000000000 # для добавления нулей в маску
 
-# make_ship: # создаем маску на основании размера корабля
-# or r3, r7, r7
-# shr r7,r7, 1
-# dec r6
-# tst r6
-# bne make_ship
+make_ship: # создаем маску на основании размера корабля
+or r3, r7, r7
+shr r7,r7, 1
+dec r6
+tst r6
+bne make_ship
 
-# shl r7,r7, 1 # откат, так как сделали лишний из-за особенности цикла
+shl r7,r7, 1 # откат, так как сделали лишний из-за особенности цикла
 
-# ldi r4, 0x8034 # адрес первой строки
+ldi r4, 0x8034 # адрес первой строки
 
-# ldi r1, board_state
+ldi r1, board_state
 
-# ldw r1, r1
-# move r7, r5 # в r5 маска
-# or r1, r7, r7
-# stw r4,r7 # пишем в первую строку корабль 
+ldw r1, r1
+move r7, r5 # в r5 маска
+or r1, r7, r7
+stw r4,r7 # пишем в первую строку корабль 
 
 
 
-# # cохраняем начальные координаты для проверки границ
-# ldi r1, 0
-# ldi r0, x_hor_st
-# stw r0, r1
-# ldi r0, y_hor_st
-# stw r0, r1
+# cохраняем начальные координаты для проверки границ
+ldi r1, 0
+ldi r0, x_hor_st
+stw r0, r1
+ldi r0, y_hor_st
+stw r0, r1
 
-# pop r7
-# push r7
+pop r7
+push r7
 
-# ldi r1, -1
-# add r1, r7, r1
-# ldi r0, x_hor_fn
-# stw r0, r1
-# #--------------------------------------------
+ldi r1, -1
+add r1, r7, r1
+ldi r0, x_hor_fn
+stw r0, r1
+#--------------------------------------------
 
-# check_button_hor:
+check_button_hor:
 
-# ldi r0, 0x8048
-# ldb r0, r1
+ldi r0, 0x8048
+ldb r0, r1
 
-# # детектор фронта----------
+# детектор фронта----------
 
-# ldi r3, prev_btn_state 
-# ldb r3, r2
-# stb r3, r1
+ldi r3, prev_btn_state 
+ldb r3, r2
+stb r3, r1
 
-# not r2, r2
+not r2, r2
 
-# and r2, r1, r2
+and r2, r1, r2
  
-# #--------------------------
+#--------------------------
 
-# check_left_hor:
-#     ldi r3, 1
-#     and r2,r3,r7
-#     tst r7
-#     beq check_up_hor
+check_left_hor:
+    ldi r3, 1
+    and r2,r3,r7
+    tst r7
+    beq check_up_hor
 
-#     # проверка на границы
-#     ldi r3, x_hor_st
-#     ldw r3, r3
+    # проверка на границы
+    ldi r3, x_hor_st
+    ldw r3, r3
 
-#     tst r3
-#     beq check_button_hor
+    tst r3
+    beq check_button_hor
 
-#     dec r3
-#     ldi r2, x_hor_st
-#     stw r2, r3  
+    dec r3
+    ldi r2, x_hor_st
+    stw r2, r3  
 
-#     ldi r2, x_hor_fn
-#     ldw r2, r3
-#     dec r3
-#     stw r2, r3
-#     #-------------------
+    ldi r2, x_hor_fn
+    ldw r2, r3
+    dec r3
+    stw r2, r3
+    #-------------------
 
-#     ldi r0, y_hor_st
-#     ldw r0, r0
-#     ldi r1, board_state
-#     add r1, r0, r1
-#     add r1, r0, r1
-#     ldw r1, r1
+    ldi r0, y_hor_st
+    ldw r0, r0
+    ldi r1, board_state
+    add r1, r0, r1
+    add r1, r0, r1
+    ldw r1, r1
 
-#     shl r5, r5, 1 
-#     move r5, r7
-#     or r1, r7, r7
-#     stw r4, r7
-#     br check_button_hor
+    shl r5, r5, 1 
+    move r5, r7
+    or r1, r7, r7
+    stw r4, r7
+    br check_button_hor
 
-# check_up_hor:
-#     ldi r3, 0b10
-#     and r2,r3,r7
-#     tst r7
-#     beq check_right_hor
+check_up_hor:
+    ldi r3, 0b10
+    and r2,r3,r7
+    tst r7
+    beq check_right_hor
 
-#     # проверка на границы
-#     ldi r3, y_hor_st
-#     ldw r3, r3
+    # проверка на границы
+    ldi r3, y_hor_st
+    ldw r3, r3
 
-#     tst r3
-#     beq check_button_hor
+    tst r3
+    beq check_button_hor
 
-#     dec r3
-#     ldi r2, y_hor_st
-#     stw r2, r3
+    dec r3
+    ldi r2, y_hor_st
+    stw r2, r3
 
-#     #-------------------
+    #-------------------
 
-#     ldi r0, y_hor_st
-#     ldw r0, r0
-#     ldi r1, board_state
-#     add r1, r0, r1
-#     add r1, r0, r1
-#     inc r1
-#     inc r1
+    ldi r0, y_hor_st
+    ldw r0, r0
+    ldi r1, board_state
+    add r1, r0, r1
+    add r1, r0, r1
+    inc r1
+    inc r1
     
-#     ldw r1,r2
-#     stw r4,r2
-#     dec r1
-#     dec r1
+    ldw r1,r2
+    stw r4,r2
+    dec r1
+    dec r1
     
-#     ldw r1, r1
+    ldw r1, r1
     
 
-#     move r5, r7
-#     or r1, r7, r7
+    move r5, r7
+    or r1, r7, r7
 
    
     
-#     dec r4
-#     dec r4
-#     stw r4, r7
-#     br check_button_hor
+    dec r4
+    dec r4
+    stw r4, r7
+    br check_button_hor
 
-# check_right_hor:
-#     ldi r3, 0b100
-#     and r2,r3,r7
-#     tst r7
-#     beq check_down_hor
+check_right_hor:
+    ldi r3, 0b100
+    and r2,r3,r7
+    tst r7
+    beq check_down_hor
 
-#     # проверка на границы
-#     ldi r3, x_hor_fn
-#     ldw r3, r3
+    # проверка на границы
+    ldi r3, x_hor_fn
+    ldw r3, r3
 
-#     ldi r2, 9
-#     cmp r2, r3
-#     beq check_button_hor
+    ldi r2, 9
+    cmp r2, r3
+    beq check_button_hor
 
-#     inc r3
-#     ldi r2, x_hor_fn
-#     stw r2, r3
+    inc r3
+    ldi r2, x_hor_fn
+    stw r2, r3
 
-#     ldi r2, x_hor_st
-#     ldw r2, r3
-#     inc r3
-#     stw r2, r3
-#     #------------------
+    ldi r2, x_hor_st
+    ldw r2, r3
+    inc r3
+    stw r2, r3
+    #------------------
 
-#     ldi r0, y_hor_st
-#     ldw r0, r0
-#     ldi r1, board_state
-#     add r1, r0, r1
-#     add r1, r0, r1
-#     ldw r1, r1
+    ldi r0, y_hor_st
+    ldw r0, r0
+    ldi r1, board_state
+    add r1, r0, r1
+    add r1, r0, r1
+    ldw r1, r1
 
 
-#     shr r5, r5, 1 
-#     move r5, r7
-#     or r1, r7, r7
-#     stw r4, r7
-#     br check_button_hor
+    shr r5, r5, 1 
+    move r5, r7
+    or r1, r7, r7
+    stw r4, r7
+    br check_button_hor
 
-# check_down_hor:
-#     ldi r3, 0b1000
-#     and r2,r3,r7
-#     tst r7
-#     beq check_reverse_hor
+check_down_hor:
+    ldi r3, 0b1000
+    and r2,r3,r7
+    tst r7
+    beq check_reverse_hor
 
-#     # проверка на границы
-#     ldi r3, y_hor_st
-#     ldw r3, r3
+    # проверка на границы
+    ldi r3, y_hor_st
+    ldw r3, r3
 
-#     ldi r2, 9
-#     cmp r2, r3
-#     beq check_button_hor
+    ldi r2, 9
+    cmp r2, r3
+    beq check_button_hor
 
-#     inc r3
-#     ldi r2, y_hor_st
-#     stw r2, r3
-#     #-----------------
+    inc r3
+    ldi r2, y_hor_st
+    stw r2, r3
+    #-----------------
 
-#     ldi r0, y_hor_st
-#     ldw r0, r0
-#     ldi r1, board_state
-#     add r1, r0, r1
-#     add r1, r0, r1
-#     dec r1
-#     dec r1
-#     ldw r1, r2
-#     stw r4, r2
+    ldi r0, y_hor_st
+    ldw r0, r0
+    ldi r1, board_state
+    add r1, r0, r1
+    add r1, r0, r1
+    dec r1
+    dec r1
+    ldw r1, r2
+    stw r4, r2
 
-#     inc r1
-#     inc r1
+    inc r1
+    inc r1
 
-#     ldw r1, r1
+    ldw r1, r1
     
-#     move r5, r7
-#     or r1, r7, r7
+    move r5, r7
+    or r1, r7, r7
     
-#     inc r4
-#     inc r4
-#     stw r4, r7
-#     br check_button_hor
+    inc r4
+    inc r4
+    stw r4, r7
+    br check_button_hor
 
-# check_reverse_hor:
-#     ldi r3, 0b10000
-#     and r2,r3,r7
-#     tst r7
-#     beq check_place_hor
-#     ldi r7, y_hor_st
-#     ldw r7, r7
+check_reverse_hor:
+    ldi r3, 0b10000
+    and r2,r3,r7
+    tst r7
+    beq check_place_hor
+    ldi r7, y_hor_st
+    ldw r7, r7
 
-#     ldi r6, board_state
-#     add r6, r7, r6
-#     add r6, r7, r6
-#     ldw r6, r6
+    ldi r6, board_state
+    add r6, r7, r6
+    add r6, r7, r6
+    ldw r6, r6
 
-#     stw r4,r6
+    stw r4,r6
 
-#     br check_button_ver
+    br check_button_ver
     
-# check_place_hor:
-#     ldi r3, 0b100000
-#     and r2, r3, r7        
-#     tst r7
-#     beq check_button_hor
+check_place_hor:
+    ldi r3, 0b100000
+    and r2, r3, r7        
+    tst r7
+    beq check_button_hor
 
-#     # Подготовка к вызову функции проверки
-#     ldi r0, y_hor_st
-#     ldw r0, r0            
-#     move r5, r1           
+    # Подготовка к вызову функции проверки
+    ldi r0, y_hor_st
+    ldw r0, r0            
+    move r5, r1           
 
-#     jsr check_placement   
+    jsr check_placement   
     
-#     tst r2                
-#     bne check_button_hor  
+    tst r2                
+    bne check_button_hor  
 
-#     # --- ЕСЛИ МОЖНО СТАВИТЬ (УСПЕХ) ---
+    # --- ЕСЛИ МОЖНО СТАВИТЬ (УСПЕХ) ---
 
-#     # 1. Записываем корабль в массив board_state
-#     ldi r3, board_state
-#     add r0, r3, r3
-#     add r0, r3, r3        
+    # 1. Записываем корабль в массив board_state
+    ldi r3, board_state
+    add r0, r3, r3
+    add r0, r3, r3        
 
-#     ldw r3, r1            # ИСПРАВЛЕНО: читаем из адреса r3 в регистр r1
-#     or r5, r1, r1         
-#     stw r3, r1            
+    ldw r3, r1            # ИСПРАВЛЕНО: читаем из адреса r3 в регистр r1
+    or r5, r1, r1         
+    stw r3, r1            
     
-#     # 2. Передвигаем указатель на следующий размер корабля
-#     ldi r0, pointer_len_ship
-#     ldw r0, r1            # ИСПРАВЛЕНО: читаем из адреса r0 в регистр r1
-#     inc r1
-#     inc r1
-#     stw r0, r1
+    # 2. Передвигаем указатель на следующий размер корабля
+    ldi r0, pointer_len_ship
+    ldw r0, r1            # ИСПРАВЛЕНО: читаем из адреса r0 в регистр r1
+    inc r1
+    inc r1
+    stw r0, r1
 
-#     # 3. Выравниваем стек
-#     pop r7
+    # 3. Выравниваем стек
+    pop r7
 
-#     br return
-
-
-
-# check_button_ver:
-# #r0 - y
-# #r1 - x
-
-# ldi r0, 0x8032 # координата y
-# ldi r1, 0b1000000000 # координата x
+    br return
 
 
-# # заполняем начальные координаты
-# ldi r2, x_ver
-# stw r2, r1
-# ldi r2, y_ver
-# stw r2, r0
 
-# ldi r1, 0
+check_button_ver:
+#r0 - y
+#r1 - x
 
-# ldi r0, x_ver_st
-# stw r0, r1
-
-# ldi r0, y_ver_st
-# stw r0, r1
+ldi r0, 0x8032 # координата y
+ldi r1, 0b1000000000 # координата x
 
 
-# pop r7
-# push r7
+# заполняем начальные координаты
+ldi r2, x_ver
+stw r2, r1
+ldi r2, y_ver
+stw r2, r0
 
-# ldi r1, -1 # заполняем нижюю координату
-# add r1, r7, r1
-# ldi r0, y_ver_fn
-# stw r0, r1
-# #---------------------------
+ldi r1, 0
 
+ldi r0, x_ver_st
+stw r0, r1
 
-# print_shipp:
-# pop r7
-# push r7
-
-# move r7, r6
-
-# ldi r0, y_ver
-# ldw r0,r0
-
-# ldi r2, y_ver_st # нужна для сохранения уже поставленых суден
-# ldw r2, r2
-# dec r2
+ldi r0, y_ver_st
+stw r0, r1
 
 
-# ldi r1, x_ver
-# ldw r1, r1
-# print_ship:
-# ldi r3, 2
-# add r0, r3,r0
-# inc r2
+pop r7
+push r7
 
-# ldi r3, board_state
-# add r3, r2, r3
-# add r3, r2, r3
-# ldw r3, r3
-
-# or r1, r3, r3
-
-# stw r0, r3
-
-# dec r6
-# tst r6
-# bne print_ship
+ldi r1, -1 # заполняем нижюю координату
+add r1, r7, r1
+ldi r0, y_ver_fn
+stw r0, r1
+#---------------------------
 
 
-# button_ver:
+print_shipp:
+pop r7
+push r7
 
-# ldi r5, 0x8048
-# ldb r5, r5 # получили кнопку
+move r7, r6
+
+ldi r0, y_ver
+ldw r0,r0
+
+ldi r2, y_ver_st # нужна для сохранения уже поставленых суден
+ldw r2, r2
+dec r2
 
 
-# # детектор фронта----------
-# ldi r3, prev_btn_state 
-# ldb r3, r2
-# stb r3, r5
+ldi r1, x_ver
+ldw r1, r1
+print_ship:
+ldi r3, 2
+add r0, r3,r0
+inc r2
 
-# not r2, r2
+ldi r3, board_state
+add r3, r2, r3
+add r3, r2, r3
+ldw r3, r3
 
-# and r2, r5, r2
+or r1, r3, r3
+
+stw r0, r3
+
+dec r6
+tst r6
+bne print_ship
+
+
+button_ver:
+
+ldi r5, 0x8048
+ldb r5, r5 # получили кнопку
+
+
+# детектор фронта----------
+ldi r3, prev_btn_state 
+ldb r3, r2
+stb r3, r5
+
+not r2, r2
+
+and r2, r5, r2
  
 
-# #--------------------------
+#--------------------------
 
-# check_left_ver:
-#     ldi r3, 1
-#     and r2,r3,r7
-#     tst r7
-#     beq check_up_ver
+check_left_ver:
+    ldi r3, 1
+    and r2,r3,r7
+    tst r7
+    beq check_up_ver
 
-#     # проверка на границы
-#     ldi r0, x_ver_st
-#     ldw r0, r0
+    # проверка на границы
+    ldi r0, x_ver_st
+    ldw r0, r0
 
-#     tst r0
-#     beq button_ver
+    tst r0
+    beq button_ver
 
-#     dec r0
-#     ldi r1, x_ver_st
-#     stw r1, r0
-#     #---------------------
+    dec r0
+    ldi r1, x_ver_st
+    stw r1, r0
+    #---------------------
 
-#     ldi r0, x_ver
-#     ldw r0, r1
+    ldi r0, x_ver
+    ldw r0, r1
 
-#     shl r1, r1, 1
-#     stw r0, r1
-#     br print_shipp
+    shl r1, r1, 1
+    stw r0, r1
+    br print_shipp
     
 
-# check_up_ver:
-#     ldi r3, 0b10
-#     and r2,r3,r7
-#     tst r7
-#     beq check_right_ver
+check_up_ver:
+    ldi r3, 0b10
+    and r2,r3,r7
+    tst r7
+    beq check_right_ver
 
-#     # проверка на границы
-#     ldi r0, y_ver_st
-#     ldw r0, r0
+    # проверка на границы
+    ldi r0, y_ver_st
+    ldw r0, r0
 
-#     tst r0
-#     beq button_ver
+    tst r0
+    beq button_ver
 
-#     dec r0
-#     ldi r1, y_ver_st
-#     stw r1, r0
+    dec r0
+    ldi r1, y_ver_st
+    stw r1, r0
 
-#     ldi r0, y_ver_fn
-#     ldw r0, r1
-#     dec r1
-#     stw r0, r1
-#     #---------------------
+    ldi r0, y_ver_fn
+    ldw r0, r1
+    dec r1
+    stw r0, r1
+    #---------------------
 
-#     ldi r1, y_ver
-#     ldw r1, r0
+    ldi r1, y_ver
+    ldw r1, r0
 
-#     ldi r3, y_ver_fn
-#     ldw r3, r3
-#     inc r3
+    ldi r3, y_ver_fn
+    ldw r3, r3
+    inc r3
 
-#     ldi r5, board_state
-#     add r5, r3, r5
-#     add r5, r3, r5
+    ldi r5, board_state
+    add r5, r3, r5
+    add r5, r3, r5
     
-#     ldw r5, r5
+    ldw r5, r5
 
-#     pop r7
-#     push r7
+    pop r7
+    push r7
 
-#     move r0, r4
-#     add r4, r7, r4
-#     add r4, r7, r4
-#     stw r4, r5      
+    move r0, r4
+    add r4, r7, r4
+    add r4, r7, r4
+    stw r4, r5      
 
-#     dec r0
-#     dec r0
+    dec r0
+    dec r0
 
-#     stw r1, r0
+    stw r1, r0
 
-#     br print_shipp
+    br print_shipp
 
 
-# check_right_ver:
-#     ldi r3, 0b100
-#     and r2,r3,r7
-#     tst r7
-#     beq check_down_ver
+check_right_ver:
+    ldi r3, 0b100
+    and r2,r3,r7
+    tst r7
+    beq check_down_ver
 
-#     # проверка на границы
-#     ldi r0, x_ver_st
-#     ldw r0, r0
+    # проверка на границы
+    ldi r0, x_ver_st
+    ldw r0, r0
 
-#     ldi r1, 9
-#     cmp r0, r1
-#     beq button_ver
+    ldi r1, 9
+    cmp r0, r1
+    beq button_ver
 
-#     inc r0
-#     ldi r1, x_ver_st
-#     stw r1, r0
-#     #---------------------
+    inc r0
+    ldi r1, x_ver_st
+    stw r1, r0
+    #---------------------
 
-#     ldi r0, x_ver
-#     ldw r0, r1
+    ldi r0, x_ver
+    ldw r0, r1
 
-#     shr r1, r1, 1
-#     stw r0, r1
+    shr r1, r1, 1
+    stw r0, r1
 
-#     br print_shipp
+    br print_shipp
 
-# check_down_ver:
-#     ldi r3, 0b1000
-#     and r2, r3, r7
-#     tst r7
-#     beq check_reverse_ver
+check_down_ver:
+    ldi r3, 0b1000
+    and r2, r3, r7
+    tst r7
+    beq check_reverse_ver
 
-#     # проверка на границы
-#     ldi r0, y_ver_fn
-#     ldw r0, r0
+    # проверка на границы
+    ldi r0, y_ver_fn
+    ldw r0, r0
 
-#     ldi r1, 9
-#     cmp r1, r0
-#     beq button_ver
+    ldi r1, 9
+    cmp r1, r0
+    beq button_ver
 
-#     inc r0
-#     ldi r1, y_ver_fn
-#     stw r1, r0
+    inc r0
+    ldi r1, y_ver_fn
+    stw r1, r0
 
-#     ldi r0, y_ver_st
-#     ldw r0, r1
-#     inc r1
-#     stw r0, r1
-#     #---------------------
+    ldi r0, y_ver_st
+    ldw r0, r1
+    inc r1
+    stw r0, r1
+    #---------------------
 
-#     ldi r3, y_ver_st
-#     ldw r3, r3
-#     dec r3
+    ldi r3, y_ver_st
+    ldw r3, r3
+    dec r3
 
-#     ldi r5, board_state
-#     add r5, r3, r5
-#     add r5, r3, r5
+    ldi r5, board_state
+    add r5, r3, r5
+    add r5, r3, r5
 
-#     ldw r5, r5
+    ldw r5, r5
 
-#     ldi r1, y_ver
-#     ldw r1, r0
+    ldi r1, y_ver
+    ldw r1, r0
 
 
     
-#     # Стираем верхнюю палубу корабля (она находится по адресу r0 + 2)
-#     ldi r3, 2
-#     add r0, r3, r4   # Записываем во временный регистр r4 адрес (r0 + 2)
-#     stw r4, r5       # Стираем старую верхнюю палубу
+    # Стираем верхнюю палубу корабля (она находится по адресу r0 + 2)
+    ldi r3, 2
+    add r0, r3, r4   # Записываем во временный регистр r4 адрес (r0 + 2)
+    stw r4, r5       # Стираем старую верхнюю палубу
     
-#     # Сдвигаем базовую координату y вниз на 1 шаг (на 2 байта)
-#     add r0, r3, r0   # r0 = r0 + 2
+    # Сдвигаем базовую координату y вниз на 1 шаг (на 2 байта)
+    add r0, r3, r0   # r0 = r0 + 2
 
-#     stw r1, r0
+    stw r1, r0
 
-#     br print_shipp
+    br print_shipp
 
-# check_reverse_ver:
-#     ldi r3, 0b10000
-#     and r2,r3,r7
-#     tst r7
-#     beq check_place_ver
+check_reverse_ver:
+    ldi r3, 0b10000
+    and r2,r3,r7
+    tst r7
+    beq check_place_ver
 
-#     pop r7
-#     push r7
+    pop r7
+    push r7
 
-#     move r7, r6
+    move r7, r6
 
-#     ldi r0, y_ver
-#     ldw r0,r0
+    ldi r0, y_ver
+    ldw r0,r0
 
-#     ldi r2, y_ver_st # нужна для сохранения уже поставленых суден
-#     ldw r2, r2
-#     dec r2
+    ldi r2, y_ver_st # нужна для сохранения уже поставленых суден
+    ldw r2, r2
+    dec r2
 
-#     del_ship:
-#     ldi r3, 2
-#     add r0, r3,r0
-#     inc r2
+    del_ship:
+    ldi r3, 2
+    add r0, r3,r0
+    inc r2
 
-#     ldi r3, board_state
-#     add r3, r2, r3
-#     add r3, r2, r3
-#     ldw r3, r3
+    ldi r3, board_state
+    add r3, r2, r3
+    add r3, r2, r3
+    ldw r3, r3
 
-#     stw r0, r3
+    stw r0, r3
 
-#     dec r6
-#     tst r6
-#     bne del_ship
+    dec r6
+    tst r6
+    bne del_ship
 
-#     br return
+    br return
 
-#   check_place_ver:
-#     ldi r3, 0b100000
-#     and r2, r3, r7        
-#     tst r7
-#     beq  button_ver
+  check_place_ver:
+    ldi r3, 0b100000
+    and r2, r3, r7        
+    tst r7
+    beq  button_ver
 
-#     #r0 - координата y клетки проверяемой
-#     #r5 и r1 - маска для ряда 
+    #r0 - координата y клетки проверяемой
+    #r5 и r1 - маска для ряда 
     
-#     # Подготовка к вызову функции проверки
+    # Подготовка к вызову функции проверки
 
-#     pop r3 # размер корабля
-#     push r3
-#     ldi r4, 0
-#     loop:
-#     dec r3
-#     ldi r0, y_ver_st
-#     ldw r0, r0  
-#     ldi r1, x_ver
-#     ldw r1, r1                 
+    pop r3 # размер корабля
+    push r3
+    ldi r4, 0
+    loop:
+    dec r3
+    ldi r0, y_ver_st
+    ldw r0, r0  
+    ldi r1, x_ver
+    ldw r1, r1                 
 
-#     add r0, r3, r0
-#     jsr check_placement   
-#     or r2, r4, r4
-#     tst r4                
-#     bne button_ver
-#     tst r3
-#     bne loop
+    add r0, r3, r0
+    jsr check_placement   
+    or r2, r4, r4
+    tst r4                
+    bne button_ver
+    tst r3
+    bne loop
 
-#     # --- ЕСЛИ МОЖНО СТАВИТЬ (УСПЕХ) ---
+    # --- ЕСЛИ МОЖНО СТАВИТЬ (УСПЕХ) ---
 
-#     # 1. Записываем корабль в массив board_state
-#     ldi r0, y_ver_st
-#     ldw r0, r0
+    # 1. Записываем корабль в массив board_state
+    ldi r0, y_ver_st
+    ldw r0, r0
 
-#     pop r1
-#     push r1
+    pop r1
+    push r1
 
-#   loop2:
-#     dec r1                # уменьшаем счетчик палуб (r1)
-#     add r0, r1, r2        # r2 = Y базовый (r0) + смещение (r1) = текущий ряд
+  loop2:
+    dec r1                # уменьшаем счетчик палуб (r1)
+    add r0, r1, r2        # r2 = Y базовый (r0) + смещение (r1) = текущий ряд
     
-#     # Считаем точный адрес в памяти: r3 = board_state + r2 * 2
-#     ldi r3, board_state
-#     add r2, r3, r3        # r3 = board_state + Y
-#     add r2, r3, r3        # r3 = board_state + Y * 2
+    # Считаем точный адрес в памяти: r3 = board_state + r2 * 2
+    ldi r3, board_state
+    add r2, r3, r3        # r3 = board_state + Y
+    add r2, r3, r3        # r3 = board_state + Y * 2
 
-#     ldw r3, r6            # Читаем текущее состояние строки с доски (по адресу r3) в r6
+    ldw r3, r6            # Читаем текущее состояние строки с доски (по адресу r3) в r6
     
-#     ldi r4, x_ver         # Загружаем АДРЕС переменной маски
-#     ldw r4, r4            # Читаем САМУ МАСКУ из памяти в r4!
+    ldi r4, x_ver         # Загружаем АДРЕС переменной маски
+    ldw r4, r4            # Читаем САМУ МАСКУ из памяти в r4!
 
-#     or r4, r6, r6         # Накладываем маску (r4) на строку доски (r6)
+    or r4, r6, r6         # Накладываем маску (r4) на строку доски (r6)
 
-#     stw r3, r6            # Записываем обновленную строку (r6) ОБРАТНО по адресу (r3)
+    stw r3, r6            # Записываем обновленную строку (r6) ОБРАТНО по адресу (r3)
     
-#     tst r1
-#     bne loop2             # Крутим цикл, пока r1 не станет равен 0
+    tst r1
+    bne loop2             # Крутим цикл, пока r1 не станет равен 0
 
-#     # 2. Передвигаем указатель на следующий размер корабля
-#     ldi r0, pointer_len_ship
-#     ldw r0, r1            
-#     inc r1
-#     inc r1
-#     stw r0, r1
+    # 2. Передвигаем указатель на следующий размер корабля
+    ldi r0, pointer_len_ship
+    ldw r0, r1            
+    inc r1
+    inc r1
+    stw r0, r1
 
-#     # 3. Выравниваем стек
-#     pop r7
+    # 3. Выравниваем стек
+    pop r7
 
-# br return
+br return
 
 #--------------------------------------------------
 
 fin:
+
+ldi r0, 0x800c
+ldi r1, 6
+ldi r2, fight_word
+
+loop30:
+tst r1
+beq end_loop30
+ldb r2, r3
+stb r0, r3
+inc r2
+dec r1
+br loop30
+end_loop30:
 
 # СТРЕЛЬБА ПО ОЧЕРЕДИ-------------------------------
 
 
 # ВЫСТРЕЛ ИГРОКА
 player_hit:
+ldi r0, bot_ship_count
+ldw r0, r0
+tst r0
+beq player_win
 
 ldi r5, 0b1000000000000 # для добавления нулей в маску
 
@@ -2076,10 +2142,26 @@ check_fire:
     ldi r1, x_hor_st
     ldw r1, r1
     ldi r2, board_state_bot
+
+    ldi r3, pointer_hit_matrix_arr
+    ldi r4, 0x805c
+    stw r3, r4
+    ldi r3, pointer_miss_matrix_arr
+    ldi r4, 0x8016
+    stw r3, r4 
+
+    ldi r3, pointer_miss_arr
+    ldi r4, board_state_miss_bot
+    stw r3, r4 
+
+    ldi r3, pointer_hit_arr
+    ldi r4, board_state_hit_bot
+    stw r3, r4 
+
     jsr check_kill_or_end
 
 
-    br bot_hit   # Возвращаемся к опросу (не сбрасываем курсор)
+    br player_hit   # Возвращаемся к опросу (не сбрасываем курсор)
 
     miss:
     ldi r3, 0x8016
@@ -2099,502 +2181,875 @@ check_fire:
 
     
     
+
 # ВЫСТРЕЛ БОТА
-
 bot_hit:
-    ldi r2, 0x800a
-    ldw r2, r0 # сгенерировали x
-    ldw r2, r1 # сгенерировали y
 
-    ldi r2, 0x000f
+ldi r0, player_ship_count
+ldw r0, r0
+tst r0
+beq bot_win
 
-    and r2, r0, r0 # берем первые 4 бита, чтобы легко взять остаток 
-    and r2, r1, r1
+# Сбрасывать счетчик ретраев больше не нужно, переходим сразу к логике бота
+normal_bot_flow:
+ldi r0, bot_state
+ldw r0, r0
+tst r0 
+beq next_cell 
 
-    ldi r2, 9
-    ldi r3, 10 
+ldi r1, 1
+cmp r1, r0
+beq search_from_start # Состояние 1
 
-    mod10X2:
+# Состояние 2
+ldi r0, curr_hit_x
+ldw r0, r0
+ldi r1, curr_hit_y
+ldw r1, r1
+br apply_direction
 
-    cmp r2, r0
-    bgt mod10Y2
+search_from_start:
+ldi r0, hit_start_x
+ldw r0, r0
+ldi r1, hit_start_y
+ldw r1, r1
 
-    sub r0, r3, r0 # отнимаем 10
+apply_direction:
+ldi r2, target_dir
+ldw r2, r2
 
-    br mod10X2
+tst r2 
+beq dir0
+dec r2
+tst r2
+beq dir1
+dec r2
+tst r2
+beq dir2
+br dir3             
 
-    mod10Y2:
+dir0:
+tst r1
+beq blocked_dir     
+dec r1
+br good2
 
-    cmp r2, r1
-    bgt good2
+dir1:
+ldi r2, 9
+cmp r2, r0
+beq blocked_dir
+inc r0
+br good2
 
-    sub r1, r3, r1 # отнимаем 10
+dir2:
+ldi r2, 9
+cmp r2, r1
+beq blocked_dir
+inc r1
+br good2
 
-    br mod10Y2
+dir3:
+tst r0              
+beq blocked_dir
+dec r0
+br good2
 
-    good2:
+blocked_dir:
+br miss2_no_write   # Смена направления, если уперлись в стену
 
-    ldi r2, board_state
-    add r2, r1, r2
-    add r2, r1, r2
+next_cell:
+ldi r2, 0x800a
+ldw r2, r0 # сгенерировали x
+ldw r2, r1 # сгенерировали y
 
-    ldw r2, r3 # загружаем в r3 состояние кораблей в y строке
+# Берем остаток от деления на 10
+ldi r2, 0x000f
+and r2, r0, r0 # берем первые 4 бита
+and r2, r1, r1
+ldi r3, 10
 
-    move r0, r4 # счетчик для сдвига 
+mod10X2:
+cmp r3, r0
+bgt mod10Y2    # ИСПРАВЛЕНИЕ: строго bgt, чтобы 10 не проходило!
+sub r0, r3, r0 # отнимаем 10
+br mod10X2
 
-    loop26:
-
-    tst r4
-    beq end_loop26
-
-    shl r3, r3, 1 
-
-    dec r4
-    br loop26
-    end_loop26:
-
-
-    ldi r4, 0b1000000000
-
-    and r4, r3, r3 # если в r3 ноль, то тогда промах, иначе - попадание
+mod10Y2:
+cmp r3, r1
+bgt good2      # ИСПРАВЛЕНИЕ: строго bgt
+sub r1, r3, r1 # отнимаем 10
+br mod10Y2
 
 
-    tst r3
-    beq miss2
+# --- ШАГАЕМ ВПРАВО, ЕСЛИ КЛЕТКА ЗАНЯТА (Состояние 0) ---
+scan_next_cell:
+inc r0              # x = x + 1
+ldi r2, 10
+cmp r2, r0          # (10 - X)
+bgt good2           # ИСПРАВЛЕНИЕ: bgt! Если X < 10 (10-X > 0), идем проверять клетку
+ldi r0, 0           # Иначе (дошли до края): x = 0
+inc r1              # y = y + 1
+cmp r2, r1          # (10 - Y)
+bgt good2           # ИСПРАВЛЕНИЕ: bgt! Если y < 10, идем проверять клетку
+ldi r1, 0           # Иначе (дошли до конца поля 9:9): y = 0
+br good2            # Идем проверять клетку 0:0
 
-    hit2:
 
-    ldi r3, 0b1000000000
+good2:
+check_again_hit:
+# --- ГЕНЕРАЦИЯ МАСКИ (Единая для всех проверок и записи) ---
+ldi r4, 0b1000000000
+move r0, r3 # r3 = координата X
+loop_mask:
+tst r3
+beq end_loop_mask
+shr r4, r4, 1
+dec r3
+br loop_mask
+end_loop_mask:
+# Теперь в r4 лежит идеальная маска выстрела!
 
-    ldi r2, 0x8034
-    add r2, r1, r2
-    add r2, r1, r2
+# Проверка на промахи
+ldi r2, board_state_miss
+add r1, r2, r2
+add r1, r2, r2
+ldw r2, r3 
+and r4, r3, r3 # маска & строка промахов
+tst r3
+beq check_hit_arr   # Если 0 -> не промахивались сюда, проверяем хиты
+
+# Если уже стреляли (промах):
+ldi r2, bot_state
+ldw r2, r2
+tst r2
+beq scan_next_cell  # Состояние 0 -> шагаем вправо!
+br miss2_no_write   # Состояние 1/2 -> меняем направление
+
+check_hit_arr:
+ldi r2, board_state_hit
+add r1, r2, r2
+add r1, r2, r2
+ldw r2, r3 
+and r4, r3, r3 # маска & строка попаданий
+tst r3
+beq good3           # Если 0 -> клетка абсолютно чистая!
+
+# ЕСЛИ УЖЕ ПОПАДАЛИ СЮДА:
+ldi r2, bot_state
+ldw r2, r2
+tst r2
+beq scan_next_cell  # Состояние 0 -> шагаем вправо!
+
+ldi r3, 1
+cmp r2, r3
+beq miss2_no_write  # Состояние 1 -> направление заблокировано, меняем
+
+# Состояние 2 -> Проскакиваем уже убитую клетку!
+ldi r3, curr_hit_x
+stw r3, r0
+ldi r3, curr_hit_y
+stw r3, r1
+br apply_direction
+
+good3:
+ldi r2, board_state
+add r1, r2, r2
+add r1, r2, r2
+ldw r2, r3 
+and r4, r3, r3 # маска & корабли
+tst r3
+beq miss2           # Корабля нет -> пишем промах!
+
+hit2:
+# --- ОБНОВЛЕНИЕ СОСТОЯНИЯ БОТА ---
+ldi r2, bot_state
+ldw r2, r2
+
+tst r2
+bne update_state_1_to_2 
+
+ldi r3, 1
+ldi r5, bot_state
+stw r5, r3
+
+ldi r3, hit_start_x
+stw r3, r0
+ldi r3, hit_start_y
+stw r3, r1
+
+ldi r3, target_dir
+ldi r5, 0
+stw r3, r5
+br save_hit_data
+
+update_state_1_to_2:
+ldi r3, 2
+ldi r5, bot_state
+stw r5, r3
+
+save_hit_data:
+ldi r3, curr_hit_x
+stw r3, r0
+ldi r3, curr_hit_y
+stw r3, r1
+
+# --- ЗАПИСЬ ПОПАДАНИЯ НА ЭКРАН (Маска уже готова в r4) ---
+ldi r2, 0x8086
+add r1, r2, r2
+add r1, r2, r2     
+
+ldi r5, board_state_hit
+add r1, r5, r5
+add r1, r5, r5
+
+ldw r5, r6      # Читаем старые попадания
+or r4, r6, r6   # r6 = старые попадания | маска нового (r4)
+stw r5, r6      # Записываем обратно в память
+
+move r4, r5     # ВАЖНО: Кладем маску в r5 для check_kill_or_end
+move r6, r3     # Кладем всю строку в r3 для экрана
+shl r3, r3, 3   # Сдвиг для матрицы 8086
+stw r2, r3      # Выводим попадание на экран
+
+# Свап X и Y перед проверкой на убийство (т.к. функция ждет r0=Y, r1=X)
+move r0, r4
+move r1, r0
+move r4, r1
+
+# проверка, убили ли корабль
+ldi r2, board_state
+
+ldi r3, pointer_hit_matrix_arr
+ldi r4, 0x8086
+stw r3, r4
+ldi r3, pointer_miss_matrix_arr
+ldi r4, 0x80a2
+stw r3, r4 
+
+ldi r3, pointer_miss_arr
+ldi r4, board_state_miss
+stw r3, r4 
+
+ldi r3, pointer_hit_arr
+ldi r4, board_state_hit
+stw r3, r4 
+
+jsr check_kill_or_end
+br bot_hit
+
+# --- ЛОГИКА "ГЛУХИХ" ПРОМАХОВ ---
+miss2_no_write:
+ldi r2, bot_state
+ldw r2, r2
+ldi r5, 1
+cmp r5, r2
+beq change_dir_nw
+ldi r5, 2
+cmp r5, r2
+bne switch_move
+br change_dir_opp_nw
+
+change_dir_nw:
+ldi r2, target_dir
+ldw r2, r5
+inc r5
+ldi r6, 0b11
+and r5, r6, r5     
+stw r2, r5
+br normal_bot_flow  
+
+change_dir_opp_nw:
+ldi r2, target_dir
+ldw r2, r5
+inc r5
+inc r5
+ldi r6, 0b11
+and r5, r6, r5     
+stw r2, r5
+
+ldi r2, hit_start_x
+ldw r2, r5
+ldi r6, curr_hit_x
+stw r6, r5
+ldi r2, hit_start_y
+ldw r2, r5
+ldi r6, curr_hit_y
+stw r6, r5
+br normal_bot_flow  
+
+# --- ЛОГИКА ОБЫЧНЫХ ПРОМАХОВ ---
+miss2:
+ldi r2, bot_state
+ldw r2, r2
+ldi r5, 1
+cmp r5, r2
+beq change_dir  
+ldi r5, 2
+cmp r5, r2
+bne do_miss_write 
+
+change_dir_opposite: 
+ldi r2, target_dir
+ldw r2, r5
+inc r5
+inc r5
+ldi r6, 0b11
+and r5, r6, r5     
+stw r2, r5
+
+ldi r2, hit_start_x
+ldw r2, r5
+ldi r6, curr_hit_x
+stw r6, r5
+ldi r2, hit_start_y
+ldw r2, r5
+ldi r6, curr_hit_y
+stw r6, r5
+br do_miss_write   
+
+change_dir:
+ldi r2, target_dir
+ldw r2, r5
+inc r5
+ldi r6, 0b11
+and r5, r6, r5     
+stw r2, r5
+
+do_miss_write:
+# Запись промаха
+ldi r2, 0x80a2
+add r1, r2, r2
+add r1, r2, r2
+
+ldi r5, board_state_miss
+add r1, r5, r5
+add r1, r5, r5
+
+ldw r5, r6
+or r4, r6, r3   # r3 = старые промахи | маска (r4)
+stw r5, r3      # сохранили в память
+
+shl r3, r3, 2   # Сдвиг на 2 влево для промахов бота (0x80a2)
+stw r2, r3      # выводим на экран
+
+br switch_move
+
+switch_move:
+br player_hit
+
+
+
+# =====================================================================
+# ФУНКЦИЯ ПРОВЕРКИ УБИЙСТВА И ОТРИСОВКИ ОРЕОЛА
+# =====================================================================
+check_kill_or_end:
+# в r5 - маска корабля
+# в r0 - координата y корабля 
+# в r1 - координата x корабля
+# в r2 - массив состояния кораблей
+
+# проверяем, горизонтальный ли корабль
+add r0, r2, r4
+add r0, r4, r4
+ldw r4, r4 # состояние корабля
+
+# нащупываем левую границу
+ldi r3, 0 # количество сдвигов влево
+
+left:
+tst r1 
+blt next17 # значит влево нет
+
+and r4, r5, r6 # в r6 - есть ли корабль в такой клетке
+tst r6
+beq next17 # значит корабля там нет
+
+ldi r6, ship_mask
+ldw r6, r7 # загружаем переменную для хранения текущей маски 
+or r5, r7, r7 # запомнили место удара
+stw r6, r7 # записали
+
+shl r5, r5, 1 # cдвигаем
+inc r3 # увеличиваем число сдвигов 
+br left
+
+# нащупываем правую границу 
+next17:
+cancel_shift: # откатываем сдвиг
+tst r3 
+beq end_cancel_shift
+shr r5, r5, 1
+dec r3
+br cancel_shift
+end_cancel_shift:
+
+right:
+ldi r6, 9 # проверка на край
+cmp r1, r6
+bgt next18 # значит вправо нет
+
+and r4, r5, r6 # в r6 - есть ли корабль в такой клетке
+tst r6
+beq next18 # значит корабля там нет
+
+ldi r6, ship_mask
+ldw r6, r7 # загружаем переменную для хранения текущей маски 
+or r5, r7, r7 # запомнили место удара
+stw r6, r7 # записали
+
+shr r5, r5, 1 # cдвигаем
+inc r3 # увеличиваем число сдвигов 
+br right
+
+next18:
+cancel_shift2: # откатываем сдвиг
+tst r3 
+beq end_cancel_shift2
+shl r5, r5, 1
+dec r3
+br cancel_shift2
+end_cancel_shift2:
+
+# проверка, горизонтален ли корабль, если да, то в переменной ship_mask больше 1 еденицы
+ldi r3, ship_mask
+ldw r3, r3
+
+# в переменной ship_mask обязательно еденица там же где и в r5, но если есть еще, то корабль горизонтален,
+# тогда просто сравним r5 и ship_mask, если равны, то корабль еденичный или вертикальный
+cmp r3, r5
+bne kill_check_hor # значит корабль вертикальный и тогда проверяем на убийство
+
+# провекрка на вертикальный или еденичный корабль
+ldi r3, 0 # количество сдвигов вверх
+
+# нащупываем верхнюю границу
+up:
+tst r0
+blt next19
+
+add r0, r2, r4
+add r0, r4, r4
+ldw r4, r4 # состояние корабля
+and r4, r5, r6 # в r6 - есть ли корабль в такой клетке
+
+tst r6
+beq next19
+
+ldi r6, y_min
+stw r6, r0
+inc r3
+dec r0
+br up
+
+next19:
+cancel_shift3: # откатываем Y
+tst r3 
+beq end_cancel_shift3
+inc r0
+dec r3
+br cancel_shift3
+end_cancel_shift3:
+
+down:
+ldi r6, 9 # проверка на край
+cmp r0, r6
+bgt next20 # значит вниз нет
+
+add r0, r2, r4
+add r0, r4, r4
+ldw r4, r4 # состояние корабля
+and r4, r5, r6 # в r6 - есть ли корабль в такой клетке
+
+tst r6
+beq next20
+
+ldi r6, y_max
+stw r6, r0
+inc r3
+inc r0
+br down
+
+next20:
+cancel_shift4: # откатываем Y
+tst r3 
+beq end_cancel_shift4
+dec r0
+dec r3
+br cancel_shift4
+end_cancel_shift4:
+
+br kill_check_ver
+
+
+kill_check_hor: 
+ldi r4, pointer_hit_arr
+ldw r4, r4
+add r4, r0, r4
+add r4, r0, r4
+ldw r4, r4 # загружаем удареные корабли
+
+and r4, r3, r4 # маска корабля and удареные палубы
+cmp r4, r3 # если не равны, то корабль еще не убит 
+bne end_check
+
+# значит убит, и если это был ход бота, меняю ему состояние на 0,
+ldi r1, pointer_hit_matrix_arr
+ldw r1, r1
+ldi r4, 0x8086
+cmp r1, r4
+bne dec_count_ship_bot # значит ход не бота
+
+ldi r6, player_ship_count # уменьшаем количество кораблей
+ldw r6, r4
+dec r4
+stw r6, r4
+
+ldi r1, bot_state
+ldi r4, 0
+stw r1, r4
+br next21
+
+dec_count_ship_bot:
+ldi r6, bot_ship_count # уменьшаем количество кораблей
+ldw r6, r4
+dec r4
+stw r6, r4
+
+next21:
+ldi r1, pointer_miss_matrix_arr
+ldw r1, r1
+add r1, r0, r1
+add r1, r0, r1
+
+ldi r4, pointer_miss_arr
+ldw r4, r4
+add r4, r0, r4
+add r4, r0, r4
+
+ldw r4, r7
+
+shl r3, r6, 1 # закрашиваю слева от корабля
+or r3, r6, r3
+shr r3, r6, 1 # закрашиваю справа от корабля
+or r3, r6, r3
+
+or r7, r3, r7 # сливаю с уже закрашенными
+stw r4, r7 # применяю (в RAM)
+
+# --- ДИНАМИЧЕСКИЙ СДВИГ 1 (ТЕКУЩАЯ СТРОКА ГОРИЗ) ---
+move r7, r2
+ldi r5, pointer_miss_matrix_arr
+ldw r5, r5
+push r6
+ldi r6, 0x80a2
+cmp r5, r6
+pop r6
+bne skip_hor_sh1
+shl r2, r2, 2  # Сдвигаем на 2 если это матрица бота (80a2)
+skip_hor_sh1:
+stw r1, r2 # вывожу на экран
+
+inc r4 # закрашиваю снизу от корабля
+inc r4
+inc r1
+inc r1
+
+ldw r4, r7
+or r7, r3, r7
+stw r4, r7 # применяю (в RAM)
+
+# --- ДИНАМИЧЕСКИЙ СДВИГ 2 (СТРОКА НИЖЕ ГОРИЗ) ---
+move r7, r2
+ldi r5, pointer_miss_matrix_arr
+ldw r5, r5
+push r6
+ldi r6, 0x80a2
+cmp r5, r6
+pop r6
+bne skip_hor_sh2
+shl r2, r2, 2
+skip_hor_sh2:
+stw r1, r2 # вывожу на экран
+
+dec r4 # закрашиваю сверху от корабля
+dec r4
+dec r4 
+dec r4
+dec r1
+dec r1
+dec r1
+dec r1
+
+ldw r4, r7
+or r7, r3, r7
+stw r4, r7 # применяю (в RAM)
+
+# --- ДИНАМИЧЕСКИЙ СДВИГ 3 (СТРОКА ВЫШЕ ГОРИЗ) ---
+move r7, r2
+ldi r5, pointer_miss_matrix_arr
+ldw r5, r5
+push r6
+ldi r6, 0x80a2
+cmp r5, r6
+pop r6
+bne skip_hor_sh3
+shl r2, r2, 2
+skip_hor_sh3:
+stw r1, r2 # вывожу на экран
+
+br end_check
+
+
+kill_check_ver:
+# проверка, убили ли корабль
+ldi r4, y_min
+ldw r4, r4
+ldi r6, y_max
+ldw r6, r6  
+
+ldi r1, pointer_hit_arr
+ldw r1, r1
+add r4, r1, r1
+add r4, r1, r1
+dec r1
+dec r1
+loop25:
+cmp r4, r6
+bgt kill
+
+inc r1
+inc r1
+
+ldw r1, r7
+inc r4
+
+and r7, r5, r7 
+tst r7
+beq end_check
+br loop25
+
+kill:
+# значит убит, и если это был ход бота, меняю ему состояние на 0,
+ldi r4, pointer_hit_matrix_arr
+ldw r4, r4
+ldi r6, 0x8086
+cmp r4, r6
+bne dec_count_ship_bot2 # значит ход не бот
+
+ldi r6, player_ship_count # уменьшаем количество кораблей игрока
+ldw r6, r4
+dec r4
+stw r6, r4
+
+ldi r6, bot_state
+ldi r4, 0
+stw r6, r4
+
+br next21_ver       # ИСПРАВЛЕНИЕ: ЖИЗНЕННО ВАЖНЫЙ ПРЫЖОК! Чтобы не отнять корабль еще и у бота!
+
+dec_count_ship_bot2:
+ldi r6, bot_ship_count # уменьшаем количество кораблей бота
+ldw r6, r4
+dec r4
+stw r6, r4
+
+
+next21_ver:
+# выкидываем ореол
+ldi r4, y_min
+ldw r4, r4
+ldi r6, y_max
+ldw r6, r6
+
+shl r5, r7, 1 # делаем ореол
+or r5, r7, r5
+shr r5, r7, 1
+or r5, r7, r5
+
+ldi r7, pointer_miss_arr
+ldw r7, r7
+add r7, r4, r7    
+add r7, r4, r7
+ldi r1, pointer_miss_matrix_arr
+ldw r1, r1
+add r1, r4, r1
+add r1, r4, r1
+
+# делаем ореол на клетку выше
+dec r7
+dec r7
+dec r1
+dec r1
+ldw r7, r2 # состояние на клетку выше
+or r2, r5, r3 # мерджим
+
+# --- ДИНАМИЧЕСКИЙ СДВИГ 1 (СТРОКА ВЫШЕ ВЕРТИК) ---
+move r3, r2
+ldi r0, pointer_miss_matrix_arr
+ldw r0, r0
+push r6
+ldi r6, 0x80a2
+cmp r0, r6
+pop r6
+bne skip_ver_sh1
+shl r2, r2, 2  # Сдвигаем на 2 если это матрица бота (80a2)
+skip_ver_sh1:
+stw r1, r2 # вывожу на экран
+stw r7, r3 # RAM: обвели на клетку выше 
+
+inc r7 
+inc r7
+inc r1 
+inc r1
+
+ldw r7, r2 # состояние текущей клетки (y_min)
+or r2, r5, r3 # мерджим
+
+# --- ДИНАМИЧЕСКИЙ СДВИГ 2 (ПЕРВАЯ ПАЛУБА ВЕРТИК) ---
+move r3, r2
+ldi r0, pointer_miss_matrix_arr
+ldw r0, r0
+push r6
+ldi r6, 0x80a2
+cmp r0, r6
+pop r6
+bne skip_ver_sh2
+shl r2, r2, 2
+skip_ver_sh2:
+stw r1, r2 # вывожу на экран
+stw r7, r3 # RAM: y_min обвели
+
+test_one_ship:
+cmp r4, r6
+beq one_ship # значит однопалубный или осталась одна клетка
+
+inc r4 
+inc r7
+inc r7
+inc r1
+inc r1
+
+ldw r7, r2 
+or r2, r5, r3 # мерджим
+
+# --- ДИНАМИЧЕСКИЙ СДВИГ 3 (ТЕЛО КОРАБЛЯ ВЕРТИК) ---
+move r3, r2
+ldi r0, pointer_miss_matrix_arr
+ldw r0, r0
+push r6
+ldi r6, 0x80a2
+cmp r0, r6
+pop r6
+bne skip_ver_sh3
+shl r2, r2, 2
+skip_ver_sh3:
+stw r1, r2 # вывожу на экран
+stw r7, r3 # RAM
+
+br test_one_ship
+
+one_ship:
+inc r7 
+inc r7
+inc r1 
+inc r1
+
+ldw r7, r2 # состояние на клетку ниже
+or r2, r5, r3 # мерджим
+
+# --- ДИНАМИЧЕСКИЙ СДВИГ 4 (СТРОКА НИЖЕ ВЕРТИК) ---
+move r3, r2
+ldi r0, pointer_miss_matrix_arr
+ldw r0, r0
+push r6
+ldi r6, 0x80a2
+cmp r0, r6
+pop r6
+bne skip_ver_sh4
+shl r2, r2, 2
+skip_ver_sh4:
+stw r1, r2 # вывожу на экран
+stw r7, r3 # RAM
+
+end_check:
+ldi r0, ship_mask
+ldi r1, 0
+stw r0, r1
+rts
     
-    ldi r5, boar
-    move r0, r4 # счетчик для сдвига 
 
-    loop27:
 
-    tst r4
-    beq end_loop27
-
-    shr r3, r3, 1 
-    
-    dec r4
-
-    br loop27
-    end_loop27:
-
-    or r
-    shl r3, r3, 1 # так как экран смещен
-    shl r3, r3, 1
-    stw r2, r3
-
-    br switch_move
-
-
-
-    miss2:
-
-    ldi r2, 0x8048
-    add r2, r1, r2
-    add r2, r1, r2
-
-    ldi r3, 0b1000000000
-    move r0, r4 # счетчик для сдвига 
-
-    loop28:
-
-    tst r4
-    beq end_loop28
-
-    shr r3, r3, 1 
-
-    dec r4
-    br loop28
-    end_loop28:
-
-    shl r3, r3, 1 # так как экран смещен
-    shl r3, r3, 1
-    stw r2, r3
-
-    br switch_move
-
-
-
-    switch_move:
-
-    br player_hit
-
-
-
-
-
-    check_kill_or_end:
-    # в r5 - маска корабля
-    # в r0 - координата y корабля 
-    # в r1 - координата x корабля
-    # в r2 - массив состояния кораблей
-
-    # проверяем, горизонтальный ли корабль
-    add r0, r2, r4
-    add r0, r4, r4
-
-    ldw r4, r4 # состояние корабля
-
-    # нащупываем левую границу
-
-    ldi r3, 0 # количество сдвигов влево
-
-    left:
-
-    tst r1 
-    blt next17 # значит влево нет
-
-    and r4, r5, r6 # в r6 - есть ли корабль в такой клетке
-
-    tst r6
-    beq next17 # значит корабля там нет
-
-    ldi r6, ship_mask
-    ldw r6, r7 # загружаем переменную для хранения текущей маски 
-    or r5, r7, r7 # запомнили место удара
-    stw r6, r7 # записали
-
-
-    shl r5, r5, 1 # cдвигаем
-
-    inc r3 # увеличиваем число сдвигов 
-    
-    br left
-
-
-    # нащупываем правую границу 
-
-    
-    next17:
-
-    cancel_shift: # откатываем сдвиг
-    tst r3 
-    beq end_cancel_shift
-    shr r5, r5, 1
-    dec r3
-    br cancel_shift
-    end_cancel_shift:
-
-    right:
-
-    ldi r6, 9 # проверка на край
-    cmp r1, r6
-    bgt next18 # значит влево нет
-
-    and r4, r5, r6 # в r6 - есть ли корабль в такой клетке
-    tst r6
-    beq next18 # значит корабля там нет
-
-    ldi r6, ship_mask
-    ldw r6, r7 # загружаем переменную для хранения текущей маски 
-    or r5, r7, r7 # запомнили место удара
-    stw r6, r7 # записали
-
-
-    shr r5, r5, 1 # cдвигаем
-
-    inc r3 # увеличиваем число сдвигов 
-    
-    br right
-
-
-    next18:
-
-    cancel_shift2: # откатываем сдвиг
-    tst r3 
-    beq end_cancel_shift2
-    shl r5, r5, 1
-    dec r3
-    br cancel_shift2
-    end_cancel_shift2:
-
-    # проверка, горизонтален ли корабль, если да, то в переменной ship_mask больше 1 еденицы
-    
-    ldi r3, ship_mask
-    ldw r3, r3
-
-    # в переменной ship_mask обязательно еденица там же где и в r5, но если есть еще, то корабль горизонтален,
-    # тогда просто сравним r5 и ship_mask, если равны, то корабль еденичный или вертикальный
-
-    cmp r3, r5
-    bne kill_check_hor # значит корабль вертикальный и тогда проверяем на убийство
-
-    # провекрка на вертикальный или еденичный корабль
-
-    # в r5 - маска корабля
-    # в r0 - координата y корабля 
-    # в r1 - координата x корабля
-    # в r2 - массив состояния кораблей
-
-    # проверяем, вертикальный ли корабль
-
-
-    ldi r3, 0 # количество сдвигов вверх
-
-    # нащупываем верхнюю границу
-    up:
-    tst r0
-    blt next19
-
-    add r0, r2, r4
-    add r0, r4, r4
-    ldw r4, r4 # состояние корабля
-    and r4, r5, r6 # в r6 - есть ли корабль в такой клетке
-    
-    tst r6
-    beq next19
-
-    ldi r6, y_min
-    stw r6, r0
-
-    inc r3
-
-    dec r0
-
-    br up
-
-
-    next19:
-
-    cancel_shift3: # откатываем Y
-    tst r3 
-    beq end_cancel_shift3
-    inc r0
-    dec r3
-    br cancel_shift3
-    end_cancel_shift3:
-
-
-
-    down:
-
-    ldi r6, 9 # проверка на край
-    cmp r0, r6
-    bgt next20 # значит влево нет
-
-    add r0, r2, r4
-    add r0, r4, r4
-    ldw r4, r4 # состояние корабля
-    and r4, r5, r6 # в r6 - есть ли корабль в такой клетке
-    
-    tst r6
-    beq next20
-
-    ldi r6, y_max
-    stw r6, r0
-
-    inc r3
-
-    inc r0
-
-    br down
-
-    next20:
-
-    cancel_shift4: # откатываем Y
-    tst r3 
-    beq end_cancel_shift4
-    dec r0
-    dec r3
-    br cancel_shift4
-    end_cancel_shift4:
-
-    br kill_check_ver
-
-
-    kill_check_hor: 
-
-    ldi r4, board_state_hit_bot
-    add r4, r0, r4
-    add r4, r0, r4
-    ldw r4, r4 # загружаем удареные корабли
-    
-    and r4, r3, r4 # маска корабля and удареные палубы
-
-    cmp r4, r3 # если не равны, то корабль еще не убит 
-
-    bne end_check
-
-    ldi r1, 0x8016
-    add r1, r0, r1
-    add r1, r0, r1
-
-    ldi r4, board_state_miss_bot
-    add r4, r0, r4
-    add r4, r0, r4
-
-    ldw r4, r7
-
-    shl r3, r6, 1 # закрашиваю слева от корабля
-    or r3, r6, r3
-    shr r3, r6, 1 # закрашиваю справа от корабля
-    or r3, r6, r3
-
-    or r7, r3, r7 # сливаю с уже закрашенными
-
-    stw r4, r7 # применяю
-    stw r1, r7 # вывожу
-    
-    inc r4 # закрашиваю снизу от корабля
-    inc r4
-    inc r1
-    inc r1
-
-    ldw r4, r7
-
-    or r7, r3, r7
-
-    stw r4, r7 # применяю
-    stw r1, r7 # вывожу
-
-    dec r4 # закрашиваю сверху от корабля
-    dec r4
-    dec r4 
-    dec r4
-    dec r1
-    dec r1
-    dec r1
-    dec r1
-
-    ldw r4, r7
-
-    or r7, r3, r7
-
-    stw r4, r7 # применяю
-    stw r1, r7 # вывожу
-
-
-
-    kill_check_ver:
-    # проверка, убили ли корабль
-    ldi r4, y_min
-    ldw r4, r4
-    ldi r6, y_max
-    ldw r6, r6  
-
-    ldi r1, board_state_hit_bot
-    add r4, r1, r1
-    add r4, r1, r1
-    dec r1
-    dec r1
-    loop25:
-    cmp r4, r6
-    bgt kill
-    
-    inc r1
-    inc r1
-
-    ldw r1, r7
-    inc r4
-
-    and r7, r5, r7 
-    tst r7
-    beq end_check
-    br loop25
-
-    kill:
-    # выкидываем ореол
-    ldi r4, y_min
-    ldw r4, r4
-    ldi r6, y_max
-    ldw r6, r6
-
-    shl r5, r7, 1 # делаем ореол
-    or r5, r7, r5
-    shr r5, r7, 1
-    or r5, r7,r5
-
-    
-    ldi r7, board_state_miss_bot
-    add r7, r4, r7    
-    add r7, r4, r7
-    ldi r1, 0x8016
-    add r1, r4, r1
-    add r1, r4, r1
-
-    # делаем ореол на клетку выше
-    dec r7
-    dec r7
-    dec r1
-    dec r1
-    ldw r7, r2 # состояние на клетку выше
-
-    or r2, r5, r3 # мерджим
-
-    stw r1, r3
-    stw r7, r3 # обвели на клетку выше 
-
-    inc r7 
-    inc r7
-    inc r1 
-    inc r1
-
-
-    ldw r7, r2 # состояние на клетку выше
-    or r2, r5, r3 # мерджим
-
-    stw r1, r3
-    stw r7, r3 # y_min обвели
-
-    
-    test_one_ship:
-    cmp r4, r6
-    beq one_ship # значит однопалубный или осталась одна клетка
-
-    inc r4 
-
-    inc r7
-    inc r7
-    inc r1
-    inc r1
-
-
-    ldw r7, r2 # состояние на клетку выше
-    or r2, r5, r3 # мерджим
-
-    stw r1, r3
-    stw r7, r3
-
-    br test_one_ship
-
-    one_ship:
-
-    inc r7 
-    inc r7
-    inc r1 
-    inc r1
-
-
-    ldw r7, r2 # состояние на клетку выше
-    or r2, r5, r3 # мерджим
-
-    stw r1, r3
-    stw r7, r3
-
-
-    end_check:
-    ldi r0, ship_mask
-    ldi r1, 0
-    stw r0, r1
-    rts
-    
-
-
-
-
-
-
-
+bot_win:
+ldi r0, 0x800e # clear
+stb r0,r0
+
+ldi r0, 0x800c
+ldi r1, bot_word
+
+ldi r2, 3
+
+loop29:
+tst r2
+beq end_loop29
+ldb r1, r3
+stb r0, r3
+inc r1
+dec r2
+br loop29
+end_loop29:
+ldi r1, 32
+stb r0, r1
+ldi r2, 4
+ldi r1, win_word
+
+loop28:
+tst r2
+beq end_loop28
+ldb r1, r3
+stb r0, r3
+inc r1
+dec r2
+br loop28
+end_loop28:
+
+br halt_bot_win
+
+
+
+player_win:
+ldi r0, 0x800e # clear
+stb r0,r0
+
+ldi r0, 0x800c
+ldi r1, player_word
+ldi r2, 6
+
+loop26:
+tst r2
+beq end_loop26
+ldb r1, r3
+stb r0, r3
+inc r1
+dec r2
+br loop26
+end_loop26:
+ldi r1, 32
+stb r0, r1
+ldi r2, 4
+ldi r1, win_word
+
+loop27:
+tst r2
+beq end_loop27
+ldb r1, r3
+stb r0, r3
+inc r1
+dec r2
+br loop27
+end_loop27:
+
+
+halt_bot_win:    
 
 
 end.
-
-
-
