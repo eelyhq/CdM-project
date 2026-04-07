@@ -67,9 +67,9 @@ x_ver: ext
 y_ver: ext
 gen_array: ext
 ships_array: ext
+# -----
 
 main>
-# stack init
 ldi r0, 0x7000   
 stsp r0
 # -----
@@ -166,7 +166,10 @@ check_field:
 beg:
 start:
     # WRITE "Ship generation..."---------------
-    ldi r0, 0x800c    # Load destination address 0x800c into r0
+    ldi r3, 0xffc2
+    stb r3, r3
+
+    ldi r0, 0xffc0    # Load destination address 0xffc0 into r0
     ldi r1, gen_array # Load source array address into r1 "Ship generation..."
     ldi r3, 18        # Load loop counter (18 bytes) into r3
 
@@ -205,7 +208,7 @@ start:
         bz exit 
         # ---
 
-        ldi r2, 0x800a # generator 
+        ldi r2, 0xff82 # generator 
         # generate start coordinates (X, Y)
         ldb r2, r5 # random value X -> r5
         ldb r2, r6 # random value Y -> r6 
@@ -230,7 +233,7 @@ start:
 #---------
 
     good: # block for selecting orientation (vertical or horizontal)
-        ldi r2, 0x800a # generator
+        ldi r2, 0xff82 # generator
         ldb r2, r4 # random value -> r2
 
         ldi r7, 1
@@ -843,7 +846,7 @@ start:
 exit: # end generation enemy's ships
 #######################################################
 
-ldi r0, 0x800e
+ldi r0, 0xffc2
 stb r0,r0
 
 #######################################################
@@ -859,10 +862,10 @@ return:
 
     ldi r0, place_array
     ldi r1, 11
-    ldi r2, 0x800c
+    ldi r2, 0xffc0
 
     # надпись---------
-    ldi r3, 0x800e
+    ldi r3, 0xffc2
     stb r3, r3  
     tst r6
     beq fin
@@ -910,7 +913,7 @@ bne make_ship
 
 shl r7,r7, 1 # откат, так как сделали лишний из-за особенности цикла
 
-ldi r4, 0x8034 # адрес первой строки
+ldi r4, 0xff6a # адрес первой строки
 
 ldi r1, board_state
 
@@ -937,7 +940,7 @@ stw r0, r1
 
 check_button_hor:
 
-ldi r0, 0x8048
+ldi r0, 0xff80
 ldb r0, r1
 
 # детектор фронта----------
@@ -1173,7 +1176,7 @@ check_button_ver:
 #r0 - y
 #r1 - x
 
-ldi r0, 0x8032 # координата y
+ldi r0, 0xff68 # координата y
 ldi r1, 0b1000000000 # координата x
 
 
@@ -1239,7 +1242,7 @@ bne print_ship
 
 button_ver:
 
-ldi r5, 0x8048
+ldi r5, 0xff80
 ldb r5, r5 # получили кнопку
 
 
@@ -1517,7 +1520,7 @@ br return
 
 fin:
 
-ldi r0, 0x800c
+ldi r0, 0xffc0
 ldi r1, 6
 ldi r2, fight_word
 
@@ -1541,7 +1544,7 @@ beq player_win
 
 ldi r5, 0b1000000000000 # для добавления нулей в маску
 
-ldi r4, 0x8070 # адрес первой строки
+ldi r4, 0xff00 # адрес первой строки
 
 ldi r1, board_state_fire_bot
 
@@ -1566,7 +1569,7 @@ push r7
 
 check_button_fire:
 
-ldi r0, 0x8048
+ldi r0, 0xff80
 ldb r0, r1
 
 # детектор фронта----------
@@ -1608,7 +1611,7 @@ check_left_fire:
     shl r5, r5, 1   # Сдвигаем сам курсор влево
     move r1, r7     # Копируем фон
     or r5, r7, r7   # r7 = фон + курсор
-    shl r7, r7, 3   # Сдвигаем ВСЁ на 3 бита для матрицы 0x8070
+    shl r7, r7, 3   # Сдвигаем ВСЁ на 3 бита для матрицы 0xff00
     stw r4, r7      # Выводим на экран
     br check_button_fire
 
@@ -1776,7 +1779,7 @@ check_fire:
     beq miss          # Если корабля нет (Z=1), прыгаем в промах
 
     hit:
-    ldi r3, 0x805c  
+    ldi r3, 0xff14  
     add r3, r7, r3
     add r3, r7, r3    # r3 = адрес экрана попаданий (сдвиг 2 влево)
 
@@ -1799,10 +1802,10 @@ check_fire:
     ldi r2, board_state_bot
 
     ldi r3, pointer_hit_matrix_arr
-    ldi r4, 0x805c
+    ldi r4, 0xff14
     stw r3, r4
     ldi r3, pointer_miss_matrix_arr
-    ldi r4, 0x8016
+    ldi r4, 0xff14
     stw r3, r4 
 
     ldi r3, pointer_miss_arr
@@ -1819,7 +1822,7 @@ check_fire:
     br player_hit   # Возвращаемся к опросу (не сбрасываем курсор)
 
     miss:
-    ldi r3, 0x8016
+    ldi r3, 0xff14
     add r3, r7, r3
     add r3, r7, r3    # r3 = адрес экрана промахов (без сдвига)
 
@@ -1910,7 +1913,7 @@ blocked_dir:
 br miss2_no_write   # Смена направления, если уперлись в стену
 
 next_cell:
-ldi r2, 0x800a
+ldi r2, 0xff82
 ldw r2, r0 # сгенерировали x
 ldw r2, r1 # сгенерировали y
 
@@ -2044,7 +2047,7 @@ ldi r3, curr_hit_y
 stw r3, r1
 
 # --- ЗАПИСЬ ПОПАДАНИЯ НА ЭКРАН (Маска уже готова в r4) ---
-ldi r2, 0x8086
+ldi r2, 0xff6a
 add r1, r2, r2
 add r1, r2, r2     
 
@@ -2070,10 +2073,10 @@ move r4, r1
 ldi r2, board_state
 
 ldi r3, pointer_hit_matrix_arr
-ldi r4, 0x8086
+ldi r4, 0xff6a
 stw r3, r4
 ldi r3, pointer_miss_matrix_arr
-ldi r4, 0x80a2
+ldi r4, 0xff40
 stw r3, r4 
 
 ldi r3, pointer_miss_arr
@@ -2167,7 +2170,7 @@ stw r2, r5
 
 do_miss_write:
 # Запись промаха
-ldi r2, 0x80a2
+ldi r2, 0xff40
 add r1, r2, r2
 add r1, r2, r2
 
@@ -2179,7 +2182,7 @@ ldw r5, r6
 or r4, r6, r3   # r3 = старые промахи | маска (r4)
 stw r5, r3      # сохранили в память
 
-shl r3, r3, 2   # Сдвиг на 2 влево для промахов бота (0x80a2)
+shl r3, r3, 2   # Сдвиг на 2 влево для промахов бота (0xff40)
 stw r2, r3      # выводим на экран
 
 br switch_move
@@ -2342,7 +2345,7 @@ bne end_check
 # значит убит, и если это был ход бота, меняю ему состояние на 0,
 ldi r1, pointer_hit_matrix_arr
 ldw r1, r1
-ldi r4, 0x8086
+ldi r4, 0xff6a
 cmp r1, r4
 bne dec_count_ship_bot # значит ход не бота
 
@@ -2388,7 +2391,7 @@ move r7, r2
 ldi r5, pointer_miss_matrix_arr
 ldw r5, r5
 push r6
-ldi r6, 0x80a2
+ldi r6, 0xff40
 cmp r5, r6
 pop r6
 bne skip_hor_sh1
@@ -2410,7 +2413,7 @@ move r7, r2
 ldi r5, pointer_miss_matrix_arr
 ldw r5, r5
 push r6
-ldi r6, 0x80a2
+ldi r6, 0xff40
 cmp r5, r6
 pop r6
 bne skip_hor_sh2
@@ -2436,7 +2439,7 @@ move r7, r2
 ldi r5, pointer_miss_matrix_arr
 ldw r5, r5
 push r6
-ldi r6, 0x80a2
+ldi r6, 0xff40
 cmp r5, r6
 pop r6
 bne skip_hor_sh3
@@ -2478,7 +2481,7 @@ kill:
 # значит убит, и если это был ход бота, меняю ему состояние на 0,
 ldi r4, pointer_hit_matrix_arr
 ldw r4, r4
-ldi r6, 0x8086
+ldi r6, 0xff6a
 cmp r4, r6
 bne dec_count_ship_bot2 # значит ход не бот
 
@@ -2534,7 +2537,7 @@ move r3, r2
 ldi r0, pointer_miss_matrix_arr
 ldw r0, r0
 push r6
-ldi r6, 0x80a2
+ldi r6, 0xff40
 cmp r0, r6
 pop r6
 bne skip_ver_sh1
@@ -2556,7 +2559,7 @@ move r3, r2
 ldi r0, pointer_miss_matrix_arr
 ldw r0, r0
 push r6
-ldi r6, 0x80a2
+ldi r6, 0xff40
 cmp r0, r6
 pop r6
 bne skip_ver_sh2
@@ -2583,7 +2586,7 @@ move r3, r2
 ldi r0, pointer_miss_matrix_arr
 ldw r0, r0
 push r6
-ldi r6, 0x80a2
+ldi r6, 0xff40
 cmp r0, r6
 pop r6
 bne skip_ver_sh3
@@ -2608,7 +2611,7 @@ move r3, r2
 ldi r0, pointer_miss_matrix_arr
 ldw r0, r0
 push r6
-ldi r6, 0x80a2
+ldi r6, 0xff40
 cmp r0, r6
 pop r6
 bne skip_ver_sh4
@@ -2625,10 +2628,10 @@ rts
     
 
 bot_win:
-ldi r0, 0x800e # clear
+ldi r0, 0xff84 # clear
 stb r0,r0
 
-ldi r0, 0x800c
+ldi r0, 0xffc0
 ldi r1, bot_word
 
 ldi r2, 3
@@ -2660,10 +2663,10 @@ end_loop28:
 br halt_bot_win
 
 player_win:
-ldi r0, 0x800e # clear
+ldi r0, 0xff84 # clear
 stb r0,r0
 
-ldi r0, 0x800c
+ldi r0, 0xffc0
 ldi r1, player_word
 ldi r2, 6
 
