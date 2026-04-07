@@ -24,7 +24,7 @@ default_handler>
 # Main program section
 rsect main
 
-# Include constants
+# Include constants.asm
 fight_word: ext 
 win_word: ext   
 bot_word: ext   
@@ -69,133 +69,21 @@ gen_array: ext
 ships_array: ext
 # -----
 
+# include replacement.asm
+check_placement: ext
+check_field: ext
+# ----
+
+# include write_tty.asm
+write_ship_generation: ext
+
 main>
 ldi r0, 0x7000   
 stsp r0
-# -----
 
-# Moving on to the main program logic, minimal subroutine setup
-# (subroutines will be saved as needed using JSR)
-br beg 
-# some functions (subroutines)
-check_placement:
-    # Универсальная функция проверки места на доске
-    # Вызывать через: jsr check_placement
-
-    # Сохраняем значения регистров
-    push r3
-    push r4
-    push r5
-    push r6
-
-    # --- ШАГ 1: Делаем "широкую" маску для проверки диагоналей ---
-    move r1, r5           
-    move r1, r6
-    shl r6, r6, 1         
-    or r5, r6, r5
-    move r1, r6
-    shr r6, r6, 1         
-    or r5, r6, r5         
-
-    # --- ШАГ 2: Проверка текущего ряда (Y) ---
-    ldi r3, board_state
-    add r0, r3, r4
-    add r0, r4, r4        # r4 = адрес текущего ряда
-    
-    ldw r4, r6            # ИСПРАВЛЕНО: читаем из адреса r4 в регистр r6
-    and r6, r5, r6
-    bne placement_error   
-
-    # --- ШАГ 3: Проверка ряда ВЫШЕ (Y - 1) ---
-    tst r0
-    beq skip_up_check     
-
-    dec r4
-    dec r4                
-    ldw r4, r6            # ИСПРАВЛЕНО
-    and r6, r5, r6
-    bne placement_error
-    inc r4
-    inc r4                
-
-skip_up_check:
-
-    # --- ШАГ 4: Проверка ряда НИЖЕ (Y + 1) ---
-    ldi r6, 9
-    cmp r0, r6
-    beq skip_down_check   
-
-    inc r4
-    inc r4                
-    ldw r4, r6            
-    and r6, r5, r6
-    bne placement_error
-
-skip_down_check:
-    ldi r2, 0             # Код успеха
-    br end_placement_check
-
-placement_error:
-    ldi r2, 1             # Код ошибки (коллизия)
-
-end_placement_check:
-    # Восстанавливаем регистры
-    pop r6
-    pop r5
-    pop r4
-    pop r3
-    rts
-
-check_field:
-   
-    tst r2
-    bz end_loop5   # Если сдвигать не надо (r2=0), перепрыгиваем цикл
-    loop5:
-    shr r0, r0, 1 
-    dec r2
-    tst r2
-    bne loop5
-    end_loop5:
-
-    ldi r2, 1
-
-    and r2, r0, r0
-
-    rts
-
-beg:
-start:
-    # WRITE "Ship generation..."---------------
-    ldi r3, 0xffc2
-    stb r3, r3
-
-    ldi r0, 0xffc0    # Load destination address 0xffc0 into r0
-    ldi r1, gen_array # Load source array address into r1 "Ship generation..."
-    ldi r3, 18        # Load loop counter (18 bytes) into r3
-
-    write:            # Loop start label
-        ldb  r1, r2       # Load byte from address in r1 (source) into r2
-        stb r0, r2        # Store byte from r2 into address in r0 (destination)
-        inc r1            # Increment source address pointer
-        dec r3            # Decrement loop counter
-        tst r3            # Test if counter is zero
-    bnz write         # Branch if counter is not zero (continue loop)
-    #----------------------------------------------
-
-    ldi r0, 0x8004  # ИСТОЧНИК ДАННЫХ: Клавиатура (Адрес 8004)
-    ldi r1, 0x8005  # ИСТОЧНИК СТАТУСА: Клавиатура avail (Адрес 8)
-    ldi r4, 0x8000  # ПРИЕМНИК: Экран TTY 1 (Адрес 8000)
-    ldi r3, 1       # Маска
+jsr write_ship_generation
 
 # СОЗДАНИЕ ПОЛЕЙ--------------------------------
-
-# --- КОНСТАНТЫ ---
-# 0 = Пусто (вода)
-# 1 = Корабль
-# 2 = Промах
-# 3 = Попадание 
-#-------------------
-
 # GENERATE ENEMY'S SHIPS----------------    
     ldi r1, ships_array  # pointer to array with size of ships 
     ldi r3, 10 # amount of ships 
@@ -1805,7 +1693,7 @@ check_fire:
     ldi r4, 0xff14
     stw r3, r4
     ldi r3, pointer_miss_matrix_arr
-    ldi r4, 0xff14
+    ldi r4, 0xff2a
     stw r3, r4 
 
     ldi r3, pointer_miss_arr
@@ -1822,7 +1710,7 @@ check_fire:
     br player_hit   # Возвращаемся к опросу (не сбрасываем курсор)
 
     miss:
-    ldi r3, 0xff14
+    ldi r3, 0xff2a
     add r3, r7, r3
     add r3, r7, r3    # r3 = адрес экрана промахов (без сдвига)
 
@@ -2047,7 +1935,7 @@ ldi r3, curr_hit_y
 stw r3, r1
 
 # --- ЗАПИСЬ ПОПАДАНИЯ НА ЭКРАН (Маска уже готова в r4) ---
-ldi r2, 0xff6a
+ldi r2, 0xff56
 add r1, r2, r2
 add r1, r2, r2     
 
@@ -2073,7 +1961,7 @@ move r4, r1
 ldi r2, board_state
 
 ldi r3, pointer_hit_matrix_arr
-ldi r4, 0xff6a
+ldi r4, 0xff56
 stw r3, r4
 ldi r3, pointer_miss_matrix_arr
 ldi r4, 0xff40
@@ -2345,7 +2233,7 @@ bne end_check
 # значит убит, и если это был ход бота, меняю ему состояние на 0,
 ldi r1, pointer_hit_matrix_arr
 ldw r1, r1
-ldi r4, 0xff6a
+ldi r4, 0xff56
 cmp r1, r4
 bne dec_count_ship_bot # значит ход не бота
 
@@ -2481,7 +2369,7 @@ kill:
 # значит убит, и если это был ход бота, меняю ему состояние на 0,
 ldi r4, pointer_hit_matrix_arr
 ldw r4, r4
-ldi r6, 0xff6a
+ldi r6, 0xff56
 cmp r4, r6
 bne dec_count_ship_bot2 # значит ход не бот
 
