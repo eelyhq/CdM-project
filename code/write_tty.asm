@@ -4,8 +4,8 @@ rsect write_tty
 gen_array: ext
 fight_word: ext
 
-exit: 
-    rts
+# include uttils.asm
+exit: ext
 
 write_ship_generation>
     # WRITE "Ship generation..."---------------

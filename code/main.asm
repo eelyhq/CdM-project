@@ -25,7 +25,6 @@ default_handler>
 rsect main
 
 # Include constants.asm
-fight_word: ext 
 win_word: ext   
 bot_word: ext   
 player_word: ext
@@ -87,14 +86,14 @@ stsp r0
 
 jsr write_ship_generation # write "Ship generation..." in tty
 
-# СОЗДАНИЕ ПОЛЕЙ--------------------------------
+# CREATE FIELDS-------------------------------
 jsr generate_enemy_ships # generate enemy field
 
 ldi r0, 0xffc2
 stb r0,r0
 
-# PLAYER SHIPS PLACEMENT
-jsr player_ships_replacement
+jsr player_ships_replacement # player ships placement
+#---------------------------------------------
 
 jsr write_fight # write "fight!" in tty
 

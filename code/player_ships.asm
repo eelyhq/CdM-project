@@ -19,8 +19,8 @@ y_ver_fn: ext
 # include replacement.asm
 check_placement: ext
 
-exit: 
-    rts
+# include uttils.asm
+exit: ext
 
 player_ships_replacement> 
     ldi r5, ships_array # array with length of ships 

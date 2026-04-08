@@ -7,9 +7,8 @@ board_state_bot: ext
 # include replacement
 check_field: ext
 
-exit: 
-    # for break
-    rts
+# include uttils
+exit: ext
 
 generate_enemy_ships>
 # GENERATE ENEMY'S SHIPS----------------    
