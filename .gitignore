@@ -2,4 +2,4 @@ build
 .venv
 .vscode
 .DS_Store
-mainmain.asm
+.env
