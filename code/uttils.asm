@@ -1,6 +1,6 @@
 rsect uttils
 
-exit: 
+exit> 
     # for exit, break and other
     rts
 
