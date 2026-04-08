@@ -73,6 +73,7 @@ check_field: ext
 
 # include write_tty.asm
 write_ship_generation: ext
+write_fight: ext
 
 # include enemy_ships.asm
 generate_enemy_ships: ext
@@ -84,7 +85,7 @@ main>
 ldi r0, 0x7000   
 stsp r0
 
-jsr write_ship_generation
+jsr write_ship_generation # write "Ship generation..." in tty
 
 # СОЗДАНИЕ ПОЛЕЙ--------------------------------
 jsr generate_enemy_ships # generate enemy field
@@ -95,20 +96,7 @@ stb r0,r0
 # PLAYER SHIPS PLACEMENT
 jsr player_ships_replacement
 
-
-ldi r0, 0xffc0
-ldi r1, 6
-ldi r2, fight_word
-
-loop30:
-tst r1
-beq end_loop30
-ldb r2, r3
-stb r0, r3
-inc r2
-dec r1
-br loop30
-end_loop30:
+jsr write_fight # write "fight!" in tty
 
 # СТРЕЛЬБА ПО ОЧЕРЕДИ-------------------------------
 # ВЫСТРЕЛ ИГРОКА

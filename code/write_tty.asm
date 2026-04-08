@@ -2,6 +2,10 @@ rsect write_tty
 
 # include constants.asm
 gen_array: ext
+fight_word: ext
+
+exit: 
+    rts
 
 write_ship_generation>
     # WRITE "Ship generation..."---------------
@@ -22,4 +26,20 @@ write_ship_generation>
 
     rts
     #----------------------------------------------
+
+write_fight> 
+    # WRITE "fight!" in tty
+    ldi r0, 0xffc0
+    ldi r1, 6
+    ldi r2, fight_word
+
+    write_loop:
+        tst r1
+        beq exit 
+
+        ldb r2, r3
+        stb r0, r3
+        inc r2
+        dec r1
+        br write_loop
 end.
