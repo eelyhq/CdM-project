@@ -1125,7 +1125,7 @@ game>
         
 
     bot_win:
-    ldi r0, 0xff84 # clear
+    ldi r0, 0xffc2 # clear
     stb r0,r0
 
     ldi r0, 0xffc0
@@ -1160,7 +1160,7 @@ game>
     br halt_bot_win
 
     player_win:
-    ldi r0, 0xff84 # clear
+    ldi r0, 0xffc2 # clear
     stb r0,r0
 
     ldi r0, 0xffc0
