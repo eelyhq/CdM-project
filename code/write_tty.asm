@@ -42,4 +42,13 @@ write_fight>
         inc r2
         dec r1
         br write_fight_loop
+
+clear_tty>
+    # clear tty
+    push r0
+    ldi r0, 0xffc2
+    stb r0,r0
+    pop r0
+    rts
+
 end.

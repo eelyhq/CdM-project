@@ -22,6 +22,9 @@ check_placement: ext
 # include uttils.asm
 exit: ext
 
+# include write_tty.asm
+clear_tty: ext
+
 player_ships_replacement> 
     ldi r5, ships_array # array with length of ships 
     ldi r6, pointer_len_ship
@@ -37,8 +40,7 @@ player_ships_replacement>
         ldi r2, 0xffc0
 
         # надпись---------
-        ldi r3, 0xffc2
-        stb r3, r3  
+        jsr clear_tty 
         tst r6
         beq exit
 

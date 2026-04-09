@@ -37,7 +37,11 @@ player_ships_replacement: ext
 # include game.asm
 game: ext
 
+# include write_tty.asm
+clear_tty: ext
+
 main>
+# init stack
 ldi r0, 0x7000   
 stsp r0
 
@@ -45,8 +49,7 @@ stsp r0
 jsr write_ship_generation # write "Ship generation..." in tty
 jsr generate_enemy_ships # generate enemy field
 
-ldi r0, 0xffc2
-stb r0,r0
+jsr clear_tty # clear tty
 
 jsr player_ships_replacement # player ships placement
 #---------------------------------------------
