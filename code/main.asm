@@ -41,20 +41,20 @@ game: ext
 clear_tty: ext
 
 main>
-# init stack
-ldi r0, 0x7000   
-stsp r0
+    # init stack
+    ldi r0, 0x7000   
+    stsp r0
 
-# CREATE FIELDS-------------------------------
-jsr write_ship_generation # write "Ship generation..." in tty
-jsr generate_enemy_ships # generate enemy field
+    # CREATE FIELDS-------------------------------
+    jsr write_ship_generation # write "Ship generation..." in tty
+    jsr generate_enemy_ships # generate enemy field
 
-jsr clear_tty # clear tty
+    jsr clear_tty # clear tty
 
-jsr player_ships_replacement # player ships placement
-#---------------------------------------------
+    jsr player_ships_replacement # player ships placement
+    #---------------------------------------------
 
-jsr write_fight # write "fight!" in tty
-jsr game # start game
+    jsr write_fight # write "fight!" in tty
+    jsr game # start game
 
 end.

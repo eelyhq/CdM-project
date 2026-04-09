@@ -2,9 +2,9 @@ include .env
 
 compile: 
 	@cocas \
-	code/constants.asm \
-	code/uttils.asm \
 	code/enemy_ships.asm \
+	code/constants.asm \
+	code/function.asm \
 	code/replacement.asm \
 	code/write_tty.asm \
 	code/player_ships.asm \
@@ -15,9 +15,9 @@ compile:
 
 workspace-compile: 
 	@cocas \
-	code/constants.asm \
-	code/uttils.asm \
 	code/enemy_ships.asm \
+	code/constants.asm \
+	code/function.asm \
 	code/replacement.asm \
 	code/write_tty.asm \
 	code/player_ships.asm \

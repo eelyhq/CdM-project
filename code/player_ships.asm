@@ -19,7 +19,7 @@ y_ver_fn: ext
 # include replacement.asm
 check_placement: ext
 
-# include uttils.asm
+# include functions.asm
 exit: ext
 
 # include write_tty.asm

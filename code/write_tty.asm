@@ -4,7 +4,7 @@ rsect write_tty
 gen_array: ext
 fight_word: ext
 
-# include uttils.asm
+# include function.asm
 exit: ext
 
 write_ship_generation>
