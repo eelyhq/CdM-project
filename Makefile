@@ -2,7 +2,10 @@ include .env
 
 compile: 
 	@cocas \
-	code/enemy_ships.asm \
+	@cocas \
+	code/enemy_ships/enemy_ships_helpers.asm \
+	code/enemy_ships/enemy_ships.asm \
+	\
 	code/constants.asm \
 	code/function.asm \
 	code/replacement.asm \
@@ -15,7 +18,9 @@ compile:
 
 workspace-compile: 
 	@cocas \
-	code/enemy_ships.asm \
+	code/enemy_ships/enemy_ships_helpers.asm \
+	code/enemy_ships/enemy_ships.asm \
+	\
 	code/constants.asm \
 	code/function.asm \
 	code/replacement.asm \
@@ -25,4 +30,3 @@ workspace-compile:
 	code/main.asm \
 	-o ${OUT} 
 	@echo "Ok. File in ${OUT}"
-
