@@ -7,6 +7,32 @@ fight_word: ext
 # include function.asm
 exit: ext
 
+print_place_your_ship>
+    print_place_text_first:   # print "Place your "
+        ldb r0, r3
+        stb r2, r3
+        inc r0
+        dec r1
+        tst r1
+        bne print_place_text_first
+
+        ldi r3, 48   # ascii '0'
+        add r6, r3, r3  # ascii current ship len
+        stb r2, r3
+
+        ldi r1, 11
+
+    print_place_text_second:  # print "-deck ship"
+        ldb r0, r3
+        stb r2, r3
+        inc r0
+        dec r1
+        tst r1
+        bne print_place_text_second
+
+    rts
+
+
 write_ship_generation>
     # WRITE "Ship generation..."---------------
     ldi r3, 0xffc2

@@ -9,6 +9,9 @@ check_field: ext
 # Try to place a vertical ship of size r4.
 # On success returns r0 = 0, on failure returns r0 = 1.
 enemy_ship_try_vertical>
+    # r5: X coord 
+    # r6: Y coord
+    # r2 size of ship
     push r6
 
     # Reject ships that run past the bottom edge.
@@ -49,6 +52,9 @@ enemy_ship_try_vertical>
 # Try to place a horizontal ship of size r4.
 # On success returns r0 = 0, on failure returns r0 = 1.
 enemy_ship_try_horizontal>
+    # r5: X coord 
+    # r6: Y coord
+    # r2 size of ship
     push r5
 
     # Reject ships that would run past the right edge.
