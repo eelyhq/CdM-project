@@ -6,6 +6,87 @@ board_state_bot: ext
 # include replacement.asm
 check_field: ext
 
+# Try to place a vertical ship of size r4.
+# On success returns r0 = 0, on failure returns r0 = 1.
+enemy_ship_try_vertical>
+    push r6
+
+    # Reject ships that run past the bottom edge.
+    move r2, r4   # r4 = r2 - ship len
+    ldi r0, 10
+    add r6, r4, r2  # r2 = Y + len
+    cmp r2, r0
+    bgt enemy_ship_vert_fail
+
+    # Check each segment and validate vertical ship.
+    move r4, r7 # len ship
+
+    enemy_ship_try_vertical_loop:
+        jsr enemy_ship_check_segment
+        tst r0
+        bnz enemy_ship_vert_fail
+
+        dec r7
+        tst r7
+        bz enemy_ship_vert_success
+
+        inc r6  # Y += 1
+        br enemy_ship_try_vertical_loop
+
+    enemy_ship_vert_success:
+        # Restore the original Y and place the ship.
+        pop r0
+        move r0, r6
+        jsr enemy_ship_place_vertical
+        ldi r0, 0
+        rts
+
+    enemy_ship_vert_fail:
+        pop r0
+        ldi r0, 1
+        rts
+
+# Try to place a horizontal ship of size r4.
+# On success returns r0 = 0, on failure returns r0 = 1.
+enemy_ship_try_horizontal>
+    push r5
+
+    # Reject ships that would run past the right edge.
+    move r2, r4
+    ldi r0, 10
+    add r5, r4, r2
+    cmp r2, r0
+    bgt enemy_ship_try_horizontal_fail
+
+    # Walk through each segment and validate the whole horizontal ship.
+    move r4, r7
+
+    enemy_ship_try_horizontal_loop:
+        jsr enemy_ship_check_segment
+        tst r0
+        bnz enemy_ship_try_horizontal_fail
+
+        dec r7
+        tst r7
+        bz enemy_ship_try_horizontal_success
+
+        inc r5
+        br enemy_ship_try_horizontal_loop
+
+    enemy_ship_try_horizontal_success:
+        # Restore the original X and place the ship.
+        pop r0
+        move r0, r5
+        jsr enemy_ship_place_horizontal
+        ldi r0, 0
+        rts
+
+    enemy_ship_try_horizontal_fail:
+        pop r0
+        ldi r0, 1
+        rts
+
+# helpers func  
 # Load the board row for the current Y coordinate into r0.
 enemy_ship_load_row:
     ldi r0, board_state_bot
@@ -237,86 +318,6 @@ enemy_ship_place_horizontal:
         br enemy_ship_place_horizontal_loop
 
     enemy_ship_place_horizontal_done:
-        rts
-
-# Try to place a vertical ship of size r4.
-# On success returns r0 = 0, on failure returns r0 = 1.
-enemy_ship_try_vertical>
-    push r6
-
-    # Reject ships that run past the bottom edge.
-    move r2, r4   # r4 = r2 - ship len
-    ldi r0, 10
-    add r6, r4, r2  # r2 = Y + len
-    cmp r2, r0
-    bgt enemy_ship_vert_fail
-
-    # Check each segment and validate vertical ship.
-    move r4, r7 # len ship
-
-    enemy_ship_try_vertical_loop:
-        jsr enemy_ship_check_segment
-        tst r0
-        bnz enemy_ship_vert_fail
-
-        dec r7
-        tst r7
-        bz enemy_ship_vert_success
-
-        inc r6  # Y += 1
-        br enemy_ship_try_vertical_loop
-
-    enemy_ship_vert_success:
-        # Restore the original Y and place the ship.
-        pop r0
-        move r0, r6
-        jsr enemy_ship_place_vertical
-        ldi r0, 0
-        rts
-
-    enemy_ship_vert_fail:
-        pop r0
-        ldi r0, 1
-        rts
-
-# Try to place a horizontal ship of size r4.
-# On success returns r0 = 0, on failure returns r0 = 1.
-enemy_ship_try_horizontal>
-    push r5
-
-    # Reject ships that would run past the right edge.
-    move r2, r4
-    ldi r0, 10
-    add r5, r4, r2
-    cmp r2, r0
-    bgt enemy_ship_try_horizontal_fail
-
-    # Walk through each segment and validate the whole horizontal ship.
-    move r4, r7
-
-    enemy_ship_try_horizontal_loop:
-        jsr enemy_ship_check_segment
-        tst r0
-        bnz enemy_ship_try_horizontal_fail
-
-        dec r7
-        tst r7
-        bz enemy_ship_try_horizontal_success
-
-        inc r5
-        br enemy_ship_try_horizontal_loop
-
-    enemy_ship_try_horizontal_success:
-        # Restore the original X and place the ship.
-        pop r0
-        move r0, r5
-        jsr enemy_ship_place_horizontal
-        ldi r0, 0
-        rts
-
-    enemy_ship_try_horizontal_fail:
-        pop r0
-        ldi r0, 1
         rts
 
 end.
