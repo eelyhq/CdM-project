@@ -12,6 +12,13 @@ button_ver: ext
 # include replacement.asm
 check_placement: ext
 
+# include write_tty.asm
+write_bad_placement: ext
+
+bad_placement_ship_ver:
+    jsr write_bad_placement
+    br button_ver
+
 check_reverse_ver>
     # Reverse key clears the preview.
     ldi r3, 0b10000
@@ -73,7 +80,7 @@ check_place_ver>
         jsr check_placement
         or r2, r4, r4
         tst r4
-        bne button_ver
+        bne bad_placement_ship_ver
         tst r3
         bne check_place_ver_loop
 

@@ -96,6 +96,7 @@ write_fight>
         inc r2
         dec r1
         br write_fight_loop
+    rts
 
 clear_tty>
     # clear tty
