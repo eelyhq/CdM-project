@@ -13,6 +13,13 @@ return: ext
 # include replacement.asm
 check_placement: ext
 
+# include write_tty.asm
+write_bad_placement: ext
+
+bad_placement_ship_hor: 
+    jsr write_bad_placement 
+    br check_button_hor
+
 check_button_hor>
     # Horizontal placement mode
     # r4 is the screen row pointer, r5 is the ship mask
@@ -82,33 +89,49 @@ check_button_hor>
         # Redraw preview.
         ldi r0, y_hor_st
         ldw r0, r0
-        ldi r1, board_state
+
+        ldi r1, board_state # r1 = board_state
         add r1, r0, r1
         add r1, r0, r1
+
+        # go to old row (where ship was before)
         inc r1
         inc r1
 
+        # r2 = board_state[old_y]
         ldw r1, r2
+
+        # screen[old_y] = clean row
         stw r4, r2
+
+        # go back to new row
         dec r1
         dec r1
 
+        # r1 = board_state[new_y]
         ldw r1, r1
-        move r5, r7
-        or r1, r7, r7
+        move r5, r7 # r7 = ship mask
+        or r1, r7, r7 # r7 = board_state[new_y] | ship
 
+        dec r4
+        dec r4
+        stw r4, r7
+
+        # loop again
+        br check_button_hor
         dec r4
         dec r4
         stw r4, r7
         br check_button_hor
 
     check_right_hor:
+        # right button (2 bit)
         ldi r3, 0b100
         and r2, r3, r7
         tst r7
         beq check_down_hor
 
-        # x == 9, so right is blocked.
+        # x == 9: right blocked
         ldi r3, x_hor_fn
         ldw r3, r3
         ldi r2, 9
@@ -116,15 +139,16 @@ check_button_hor>
         beq check_button_hor
 
         inc r3
-        ldi r2, x_hor_fn
+        ldi r2, x_hor_fn # x_hor_fn += 1
         stw r2, r3
 
-        ldi r2, x_hor_st
+        ldi r2, x_hor_st # x_hor_st += 1
         ldw r2, r3
         inc r3
         stw r2, r3
 
-        # Redraw preview.
+        # REDRAW PREVIEW
+        # Like left
         ldi r0, y_hor_st
         ldw r0, r0
         ldi r1, board_state
@@ -139,12 +163,13 @@ check_button_hor>
         br check_button_hor
 
     check_down_hor:
+        # check down (3 bit)
         ldi r3, 0b1000
         and r2, r3, r7
         tst r7
         beq check_reverse_hor
 
-        # y == 9, so down is blocked.
+        # y == 9: down blocked
         ldi r3, y_hor_st
         ldw r3, r3
         ldi r2, 9
@@ -155,7 +180,8 @@ check_button_hor>
         ldi r2, y_hor_st
         stw r2, r3
 
-        # Redraw preview.
+        # REDRAW PREVIEW
+        # like up
         ldi r0, y_hor_st
         ldw r0, r0
         ldi r1, board_state
@@ -179,22 +205,24 @@ check_button_hor>
         br check_button_hor
 
     check_reverse_hor:
+        # go vertical mode 
+        # reverse button (4 bit)
         ldi r3, 0b10000
         and r2, r3, r7
         tst r7
         beq check_place_hor
 
-        # Reverse key switches to vertical mode.
         ldi r7, y_hor_st
         ldw r7, r7
 
+        # get cur row
         ldi r6, board_state
         add r6, r7, r6
         add r6, r7, r6
         ldw r6, r6
 
         stw r4, r6
-        br check_button_ver
+        br check_button_ver # go to vertical
 
     check_place_hor:
         ldi r3, 0b100000
@@ -202,16 +230,17 @@ check_button_hor>
         tst r7
         beq check_button_hor
 
-        # Check the ship before committing it.
+        # check the ship before commit
         ldi r0, y_hor_st
         ldw r0, r0
-        move r5, r1
+        move r5, r1 # r1 - mask
 
         jsr check_placement
         tst r2
-        bne check_button_hor
+        bne bad_placement_ship_hor # bad
 
-        # Commit ship to board_state.
+        # OK 
+        # Commit ship to board_state
         ldi r3, board_state
         add r0, r3, r3
         add r0, r3, r3
@@ -220,7 +249,7 @@ check_button_hor>
         or r5, r1, r1
         stw r3, r1
 
-        # Move to the next ship size.
+        # Move to the next ship size
         ldi r0, pointer_len_ship
         ldw r0, r1
         inc r1

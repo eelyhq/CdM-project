@@ -145,4 +145,7 @@ ships_array>
     dc 1
     dc 1
 
+asect 0x2000
+bad_placement> 
+    dc "Bad placement! Try again", 0
 end.

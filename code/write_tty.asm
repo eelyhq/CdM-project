@@ -3,9 +3,37 @@ rsect write_tty
 # include constants.asm
 gen_array: ext
 fight_word: ext
+bad_placement: ext
 
 # include function.asm
 exit: ext
+
+write_bad_placement> 
+    push r3
+    push r2
+    push r1
+    push r0
+
+    ldi r3, 0xffc2
+    stb r3, r3
+
+    ldi r0, 0xffc0    
+    ldi r1, bad_placement 
+    ldi r3, 24        
+
+    write_bad_placement_loop:      
+        ldb  r1, r2                
+        stb r0, r2                 
+        inc r1                     
+        dec r3                     
+        tst r3                     
+    bnz write_bad_placement_loop   
+
+    pop r0
+    pop r1
+    pop r2
+    pop r3
+    rts
 
 print_place_your_ship>
     print_place_text_first:   # print "Place your "
