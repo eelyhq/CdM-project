@@ -17,13 +17,12 @@ check_reverse_ver: ext
 check_place_ver: ext
 
 check_button_ver>
-    # Vertical placement mode starts here.
     # r0 - y, r1 - x, r7 - current ship size
 
-    ldi r0, 0xff68 # Y coordinate row on the screen
-    ldi r1, 0b1000000000 # X coordinate cursor mask
+    ldi r0, 0xff68 
+    ldi r1, 0b1000000000 
 
-    # Initialize the ship's coordinates.
+    # init ship's coordinates.
     ldi r2, x_ver
     stw r2, r1
     ldi r2, y_ver
@@ -44,7 +43,7 @@ check_button_ver>
     ldi r0, y_ver_fn
     stw r0, r1
 
-    # Render the ship line and wait for player input.
+    # Render the ship line and wait for player input
     print_shipp:
         pop r7
         push r7
