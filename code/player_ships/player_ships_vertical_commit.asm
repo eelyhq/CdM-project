@@ -58,7 +58,7 @@ check_reverse_ver>
         br return
 
 check_place_ver>
-    # Confirm button enters commit mode.
+    # Confirm button enter commit mode.
     ldi r3, 0b100000
     and r2, r3, r7
     tst r7
