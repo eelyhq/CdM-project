@@ -4,14 +4,16 @@ compile:
 	@cocas \
 	code/enemy_ships/enemy_ships_helpers.asm \
 	code/enemy_ships/enemy_ships.asm \
+	\
 	code/player_ships/player_ships_horizontal.asm \
-	code/player_ships/player_ships_helpers.asm \
+	code/player_ships/player_ships_vertical_placement.asm \
 	code/player_ships/player_ships_vertical_commit.asm \
+	code/player_ships/player_ships.asm \
+	\
 	code/constants.asm \
 	code/function.asm \
 	code/replacement.asm \
 	code/write_tty.asm \
-	code/player_ships/player_ships.asm \
 	code/game.asm \
 	code/main.asm \
 	-o build/out.img
