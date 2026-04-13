@@ -271,7 +271,7 @@ bot_hit>
     stw r3, r4 
 
     jsr check_kill_or_end
-    br end_bot_turn
+    br normal_bot_flow
 
     # --- ЛОГИКА "ГЛУХИХ" ПРОМАХОВ ---
     handle_miss_without_write:

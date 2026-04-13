@@ -90,6 +90,19 @@ write_win>
         pop r0 
         rts
 
+write_space> 
+    push r0
+    push r1
+
+    ldi r0, 0xffc0
+
+    ldi r1, 32   # space
+    stb r0, r1
+
+    pop r1
+    pop r0
+    rts
+
 write_bad_placement> 
     push r3
     push r2

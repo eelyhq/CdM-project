@@ -21,6 +21,7 @@ clear_tty: ext
 write_bot: ext
 write_player: ext
 write_win: ext
+write_space: ext
 
 check_kill_or_end>
     # в r5 - маска корабля
@@ -460,8 +461,7 @@ bot_win>
     jsr clear_tty
     jsr write_bot
     
-    ldi r1, 32
-    stb r0, r1
+    jsr write_space
 
     jsr write_win
     rts
@@ -470,8 +470,7 @@ player_win>
     jsr clear_tty
     jsr write_player
     
-    ldi r1, 32
-    stb r0, r1
+    jsr write_space
 
     jsr write_win
     rts
