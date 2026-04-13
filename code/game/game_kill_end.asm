@@ -12,9 +12,6 @@ pointer_miss_arr: ext
 bot_state: ext
 bot_ship_count: ext
 player_ship_count: ext
-bot_word: ext
-win_word: ext
-player_word: ext
 
 # include write_tty.asm
 clear_tty: ext
@@ -24,39 +21,39 @@ write_win: ext
 write_space: ext
 
 check_kill_or_end>
-    # в r5 - маска корабля
-    # в r0 - координата y корабля 
-    # в r1 - координата x корабля
-    # в r2 - массив состояния кораблей
+    # r5 = ship mask
+    # r0 = ship y coordinate
+    # r1 = ship x coordinate
+    # r2 = ship state array
 
-    # проверяем, горизонтальный ли корабль
+    # Check whether the ship is horizontal
     add r0, r2, r4
     add r0, r4, r4
-    ldw r4, r4 # состояние корабля
+    ldw r4, r4 # ship state
 
-    # нащупываем левую границу
-    ldi r3, 0 # количество сдвигов влево
+    # Find the left boundary
+    ldi r3, 0 # number of left shifts
 
     left:
     tst r1 
-    blt left_scan_done # значит влево нет
+    blt left_scan_done # no more cells to the left
 
-    and r4, r5, r6 # в r6 - есть ли корабль в такой клетке
+    and r4, r5, r6 # r6 = ship exists in this cell
     tst r6
-    beq left_scan_done # значит корабля там нет
+    beq left_scan_done # no ship in this cell
 
     ldi r6, ship_mask
-    ldw r6, r7 # загружаем переменную для хранения текущей маски 
-    or r5, r7, r7 # запомнили место удара
-    stw r6, r7 # записали
+    ldw r6, r7 # load temp storage for current mask
+    or r5, r7, r7 # remember the hit position
+    stw r6, r7 # store it
 
-    shl r5, r5, 1 # cдвигаем
-    inc r3 # увеличиваем число сдвигов 
+    shl r5, r5, 1 # shift left
+    inc r3 # increase shift count
     br left
 
-    # нащупываем правую границу 
+    # Find the right boundary
     left_scan_done:
-    restore_left_shift: # откатываем сдвиг
+    restore_left_shift: # restore shift
     tst r3 
     beq restore_left_shift_done
     shr r5, r5, 1
@@ -65,25 +62,25 @@ check_kill_or_end>
     restore_left_shift_done:
 
     right:
-    ldi r6, 9 # проверка на край
+    ldi r6, 9 # edge check
     cmp r1, r6
-    bgt right_scan_done # значит вправо нет
+    bgt right_scan_done # no more cells to the right
 
-    and r4, r5, r6 # в r6 - есть ли корабль в такой клетке
+    and r4, r5, r6 # r6 = ship exists in this cell
     tst r6
-    beq right_scan_done # значит корабля там нет
+    beq right_scan_done # no ship in this cell
 
     ldi r6, ship_mask
-    ldw r6, r7 # загружаем переменную для хранения текущей маски 
-    or r5, r7, r7 # запомнили место удара
-    stw r6, r7 # записали
+    ldw r6, r7 # load temp storage for current mask
+    or r5, r7, r7 # remember the hit position
+    stw r6, r7 # store it
 
-    shr r5, r5, 1 # cдвигаем
-    inc r3 # увеличиваем число сдвигов 
+    shr r5, r5, 1 # shift right
+    inc r3 # increase shift count
     br right
 
     right_scan_done:
-    restore_right_shift: # откатываем сдвиг
+    restore_right_shift: # restore shift
     tst r3 
     beq restore_right_shift_done
     shl r5, r5, 1
@@ -91,27 +88,27 @@ check_kill_or_end>
     br restore_right_shift
     restore_right_shift_done:
 
-    # проверка, горизонтален ли корабль, если да, то в переменной ship_mask больше 1 еденицы
+    # Check whether the ship is horizontal; if so, ship_mask has more than one bit
     ldi r3, ship_mask
     ldw r3, r3
 
-    # в переменной ship_mask обязательно еденица там же где и в r5, но если есть еще, то корабль горизонтален,
-    # тогда просто сравним r5 и ship_mask, если равны, то корабль еденичный или вертикальный
+    # ship_mask always has one bit in the same place as r5, but if there are more,
+    # then the ship is horizontal. If r5 and ship_mask match, the ship is single-cell or vertical.
     cmp r3, r5
-    bne horizontal_kill_check # значит корабль вертикальный и тогда проверяем на убийство
+    bne horizontal_kill_check # ship is vertical, so check for kill
 
-    # провекрка на вертикальный или еденичный корабль
-    ldi r3, 0 # количество сдвигов вверх
+    # Check vertical or single-cell ship
+    ldi r3, 0 # number of upward shifts
 
-    # нащупываем верхнюю границу
+    # Find the upper boundary
     up:
     tst r0
     blt up_scan_done
 
     add r0, r2, r4
     add r0, r4, r4
-    ldw r4, r4 # состояние корабля
-    and r4, r5, r6 # в r6 - есть ли корабль в такой клетке
+    ldw r4, r4 # ship state
+    and r4, r5, r6 # r6 = ship exists in this cell
 
     tst r6
     beq up_scan_done
@@ -123,7 +120,7 @@ check_kill_or_end>
     br up
 
     up_scan_done:
-    restore_up_shift: # откатываем Y
+    restore_up_shift: # restore Y
     tst r3 
     beq restore_up_shift_done
     inc r0
@@ -132,14 +129,14 @@ check_kill_or_end>
     restore_up_shift_done:
 
     down:
-    ldi r6, 9 # проверка на край
+    ldi r6, 9 # edge check
     cmp r0, r6
-    bgt down_scan_done # значит вниз нет
+    bgt down_scan_done # no more cells below
 
     add r0, r2, r4
     add r0, r4, r4
-    ldw r4, r4 # состояние корабля
-    and r4, r5, r6 # в r6 - есть ли корабль в такой клетке
+    ldw r4, r4 # ship state
+    and r4, r5, r6 # r6 = ship exists in this cell
 
     tst r6
     beq down_scan_done
@@ -151,7 +148,7 @@ check_kill_or_end>
     br down
 
     down_scan_done:
-    restore_down_shift: # откатываем Y
+    restore_down_shift: # restore Y
     tst r3 
     beq restore_down_shift_done
     dec r0
@@ -166,20 +163,20 @@ check_kill_or_end>
     ldw r4, r4
     add r4, r0, r4
     add r4, r0, r4
-    ldw r4, r4 # загружаем удареные корабли
+    ldw r4, r4 # load hit ships
 
-    and r4, r3, r4 # маска корабля and удареные палубы
-    cmp r4, r3 # если не равны, то корабль еще не убит 
+    and r4, r3, r4 # ship mask AND hit deck cells
+    cmp r4, r3 # if not equal, the ship is not yet sunk
     bne cleanup_and_return
 
-    # значит убит, и если это был ход бота, меняю ему состояние на 0,
+    # Ship is sunk; if this was the bot's turn, reset its state to 0
     ldi r1, pointer_hit_matrix_arr
     ldw r1, r1
     ldi r4, 0xff56
     cmp r1, r4
-    bne dec_count_ship_bot # значит ход не бота
+    bne dec_count_ship_bot # not the bot's turn
 
-    ldi r6, player_ship_count # уменьшаем количество кораблей
+    ldi r6, player_ship_count # decrement player ship count
     ldw r6, r4
     dec r4
     stw r6, r4
@@ -190,7 +187,7 @@ check_kill_or_end>
     br build_horizontal_aoe
 
     dec_count_ship_bot:
-    ldi r6, bot_ship_count # уменьшаем количество кораблей
+    ldi r6, bot_ship_count # decrement bot ship count
     ldw r6, r4
     dec r4
     stw r6, r4
@@ -208,15 +205,15 @@ check_kill_or_end>
 
     ldw r4, r7
 
-    shl r3, r6, 1 # закрашиваю слева от корабля
+    shl r3, r6, 1 # paint to the left of the ship
     or r3, r6, r3
-    shr r3, r6, 1 # закрашиваю справа от корабля
+    shr r3, r6, 1 # paint to the right of the ship
     or r3, r6, r3
 
-    or r7, r3, r7 # сливаю с уже закрашенными
-    stw r4, r7 # применяю (в RAM)
+    or r7, r3, r7 # merge with already painted cells
+    stw r4, r7 # apply it in RAM
 
-    # --- ДИНАМИЧЕСКИЙ СДВИГ 1 (ТЕКУЩАЯ СТРОКА ГОРИЗ) ---
+    # --- DYNAMIC SHIFT 1 (CURRENT HORIZONTAL ROW) ---
     move r7, r2
     ldi r5, pointer_miss_matrix_arr
     ldw r5, r5
@@ -225,20 +222,20 @@ check_kill_or_end>
     cmp r5, r6
     pop r6
     bne skip_horizontal_matrix_shift_1
-    shl r2, r2, 2  # Сдвигаем на 2 если это матрица бота (80a2)
+    shl r2, r2, 2  # Shift by 2 if this is the bot matrix (80a2)
     skip_horizontal_matrix_shift_1:
-    stw r1, r2 # вывожу на экран
+    stw r1, r2 # draw on screen
 
-    inc r4 # закрашиваю снизу от корабля
+    inc r4 # paint below the ship
     inc r4
     inc r1
     inc r1
 
     ldw r4, r7
     or r7, r3, r7
-    stw r4, r7 # применяю (в RAM)
+    stw r4, r7 # apply it in RAM
 
-    # --- ДИНАМИЧЕСКИЙ СДВИГ 2 (СТРОКА НИЖЕ ГОРИЗ) ---
+    # --- DYNAMIC SHIFT 2 (ROW BELOW HORIZONTAL SHIP) ---
     move r7, r2
     ldi r5, pointer_miss_matrix_arr
     ldw r5, r5
@@ -249,9 +246,9 @@ check_kill_or_end>
     bne skip_horizontal_matrix_shift_2
     shl r2, r2, 2
     skip_horizontal_matrix_shift_2:
-    stw r1, r2 # вывожу на экран
+    stw r1, r2 # draw on screen
 
-    dec r4 # закрашиваю сверху от корабля
+    dec r4 # paint above the ship
     dec r4
     dec r4 
     dec r4
@@ -262,9 +259,9 @@ check_kill_or_end>
 
     ldw r4, r7
     or r7, r3, r7
-    stw r4, r7 # применяю (в RAM)
+    stw r4, r7 # apply it in RAM
 
-    # --- ДИНАМИЧЕСКИЙ СДВИГ 3 (СТРОКА ВЫШЕ ГОРИЗ) ---
+    # --- DYNAMIC SHIFT 3 (ROW ABOVE HORIZONTAL SHIP) ---
     move r7, r2
     ldi r5, pointer_miss_matrix_arr
     ldw r5, r5
@@ -275,12 +272,12 @@ check_kill_or_end>
     bne skip_horizontal_matrix_shift_3
     shl r2, r2, 2
     skip_horizontal_matrix_shift_3:
-    stw r1, r2 # вывожу на экран
+    stw r1, r2 # draw on screen
 
     br cleanup_and_return
 
     vertical_kill_check:
-    # проверка, убили ли корабль
+    # Check whether the ship is killed
     ldi r4, y_min
     ldw r4, r4
     ldi r6, y_max
@@ -308,14 +305,14 @@ check_kill_or_end>
     br scan_vertical_cells
 
     mark_ship_as_sunk:
-    # значит убит, и если это был ход бота, меняю ему состояние на 0,
+    # Ship is sunk; if this was the bot's turn, reset its state to 0
     ldi r4, pointer_hit_matrix_arr
     ldw r4, r4
     ldi r6, 0xff56
     cmp r4, r6
-    bne dec_count_ship_bot2 # значит ход не бот
+    bne dec_count_ship_bot2 # not the bot's turn
 
-    ldi r6, player_ship_count # уменьшаем количество кораблей игрока
+    ldi r6, player_ship_count # decrement player ship count
     ldw r6, r4
     dec r4
     stw r6, r4
@@ -324,23 +321,23 @@ check_kill_or_end>
     ldi r4, 0
     stw r6, r4
 
-    br build_vertical_aoe       # ИСПРАВЛЕНИЕ: ЖИЗНЕННО ВАЖНЫЙ ПРЫЖОК! Чтобы не отнять корабль еще и у бота!
+    br build_vertical_aoe       # IMPORTANT FIX: do not decrement the bot again
 
     dec_count_ship_bot2:
-    ldi r6, bot_ship_count # уменьшаем количество кораблей бота
+    ldi r6, bot_ship_count # decrement bot ship count
     ldw r6, r4
     dec r4
     stw r6, r4
 
 
     build_vertical_aoe:
-    # выкидываем ореол
+    # Build the halo
     ldi r4, y_min
     ldw r4, r4
     ldi r6, y_max
     ldw r6, r6
 
-    shl r5, r7, 1 # делаем ореол
+    shl r5, r7, 1 # build halo
     or r5, r7, r5
     shr r5, r7, 1
     or r5, r7, r5
@@ -354,15 +351,15 @@ check_kill_or_end>
     add r1, r4, r1
     add r1, r4, r1
 
-    # делаем ореол на клетку выше
+    # Build halo one cell above
     dec r7
     dec r7
     dec r1
     dec r1
-    ldw r7, r2 # состояние на клетку выше
-    or r2, r5, r3 # мерджим
+    ldw r7, r2 # state one cell above
+    or r2, r5, r3 # merge
 
-    # --- ДИНАМИЧЕСКИЙ СДВИГ 1 (СТРОКА ВЫШЕ ВЕРТИК) ---
+    # --- DYNAMIC SHIFT 1 (ROW ABOVE VERTICAL SHIP) ---
     move r3, r2
     ldi r0, pointer_miss_matrix_arr
     ldw r0, r0
@@ -371,20 +368,20 @@ check_kill_or_end>
     cmp r0, r6
     pop r6
     bne skip_vertical_matrix_shift_1
-    shl r2, r2, 2  # Сдвигаем на 2 если это матрица бота (80a2)
+    shl r2, r2, 2  # Shift by 2 if this is the bot matrix (80a2)
     skip_vertical_matrix_shift_1:
-    stw r1, r2 # вывожу на экран
-    stw r7, r3 # RAM: обвели на клетку выше 
+    stw r1, r2 # draw on screen
+    stw r7, r3 # RAM: halo one cell above
 
     inc r7 
     inc r7
     inc r1 
     inc r1
 
-    ldw r7, r2 # состояние текущей клетки (y_min)
-    or r2, r5, r3 # мерджим
+    ldw r7, r2 # state of the current cell (y_min)
+    or r2, r5, r3 # merge
 
-    # --- ДИНАМИЧЕСКИЙ СДВИГ 2 (ПЕРВАЯ ПАЛУБА ВЕРТИК) ---
+    # --- DYNAMIC SHIFT 2 (FIRST VERTICAL DECK) ---
     move r3, r2
     ldi r0, pointer_miss_matrix_arr
     ldw r0, r0
@@ -395,12 +392,12 @@ check_kill_or_end>
     bne skip_vertical_matrix_shift_2
     shl r2, r2, 2
     skip_vertical_matrix_shift_2:
-    stw r1, r2 # вывожу на экран
-    stw r7, r3 # RAM: y_min обвели
+    stw r1, r2 # draw on screen
+    stw r7, r3 # RAM: y_min halo drawn
 
     scan_vertical_body:
     cmp r4, r6
-    beq single_cell_ship # значит однопалубный или осталась одна клетка
+    beq single_cell_ship # single-cell ship or only one cell left
 
     inc r4 
     inc r7
@@ -409,9 +406,9 @@ check_kill_or_end>
     inc r1
 
     ldw r7, r2 
-    or r2, r5, r3 # мерджим
+    or r2, r5, r3 # merge
 
-    # --- ДИНАМИЧЕСКИЙ СДВИГ 3 (ТЕЛО КОРАБЛЯ ВЕРТИК) ---
+    # --- DYNAMIC SHIFT 3 (VERTICAL SHIP BODY) ---
     move r3, r2
     ldi r0, pointer_miss_matrix_arr
     ldw r0, r0
@@ -422,7 +419,7 @@ check_kill_or_end>
     bne skip_vertical_matrix_shift_3
     shl r2, r2, 2
     skip_vertical_matrix_shift_3:
-    stw r1, r2 # вывожу на экран
+    stw r1, r2 # draw on screen
     stw r7, r3 # RAM
 
     br scan_vertical_body
@@ -433,10 +430,10 @@ check_kill_or_end>
     inc r1 
     inc r1
 
-    ldw r7, r2 # состояние на клетку ниже
-    or r2, r5, r3 # мерджим
+    ldw r7, r2 # state of the cell below
+    or r2, r5, r3 # merge
 
-    # --- ДИНАМИЧЕСКИЙ СДВИГ 4 (СТРОКА НИЖЕ ВЕРТИК) ---
+    # --- DYNAMIC SHIFT 4 (ROW BELOW VERTICAL SHIP) ---
     move r3, r2
     ldi r0, pointer_miss_matrix_arr
     ldw r0, r0
@@ -447,7 +444,7 @@ check_kill_or_end>
     bne skip_vertical_matrix_shift_4
     shl r2, r2, 2
     skip_vertical_matrix_shift_4:
-    stw r1, r2 # вывожу на экран
+    stw r1, r2 # draw on screen
     stw r7, r3 # RAM
 
     cleanup_and_return:
