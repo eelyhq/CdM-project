@@ -271,6 +271,12 @@ bot_hit>
     stw r3, r4 
 
     jsr check_kill_or_end
+
+    ldi r0, player_ship_count
+    ldw r0, r0
+    tst r0
+    beq bot_win
+
     br normal_bot_flow
 
     # --- LOGIC FOR "DEAD-END" MISSES ---
