@@ -1,6 +1,6 @@
 rsect game
 
-# include <constants.asm>
+# include constants.asm
 player_hit: ext
 
 game>

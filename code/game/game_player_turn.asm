@@ -1,6 +1,6 @@
 rsect game_player_turn
 
-# include <constants.asm>
+# include constants.asm
 bot_ship_count: ext
 board_state_fire_bot: ext
 x_hor_st: ext
@@ -24,7 +24,7 @@ prev_btn_state: ext
 board_state_hit: ext
 board_state: ext
 
-# include <game_kill_end.asm>
+# include game_kill_end.asm
 check_kill_or_end: ext
 bot_hit: ext
 player_win: ext

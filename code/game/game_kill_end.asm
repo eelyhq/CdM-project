@@ -1,6 +1,6 @@
 rsect game_kill_end
 
-# include <constants.asm>
+# include constants.asm
 board_state: ext
 ship_mask: ext
 y_min: ext
