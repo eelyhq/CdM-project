@@ -4,9 +4,91 @@ rsect write_tty
 gen_array: ext
 fight_word: ext
 bad_placement: ext
+bot_word: ext
+player_word: ext
+win_word: ext
 
 # include function.asm
 exit: ext
+
+write_bot>
+    push r0
+    push r1
+    push r2
+    push r3
+
+    ldi r0, 0xffc0
+    ldi r1, bot_word
+
+    ldi r2, 3
+
+    write_bot_label:
+        tst r2
+        beq write_bot_label_done
+        ldb r1, r3
+        stb r0, r3
+        inc r1
+        dec r2
+        br write_bot_label
+    
+    write_bot_label_done:
+        pop r3
+        pop r2
+        pop r1
+        pop r0 
+        rts
+
+write_player> 
+    push r0
+    push r1
+    push r2
+    push r3
+
+    ldi r0, 0xffc0
+    ldi r1, player_word
+    ldi r2, 6
+
+    write_player_label:
+        tst r2
+        beq write_player_label_done
+        ldb r1, r3
+        stb r0, r3
+        inc r1
+        dec r2
+        br write_player_label
+
+    write_player_label_done:
+        pop r3
+        pop r2
+        pop r1
+        pop r0 
+        rts
+
+write_win> 
+    push r0
+    push r1
+    push r2
+    push r3
+
+    ldi r0, 0xffc0
+    ldi r2, 4
+    ldi r1, win_word
+
+    write_bot_win_label:
+        tst r2
+        beq write_bot_win_label_done
+        ldb r1, r3
+        stb r0, r3
+        inc r1
+        dec r2
+        br write_bot_win_label
+
+    write_bot_win_label_done:
+        pop r3
+        pop r2
+        pop r1
+        pop r0 
+        rts
 
 write_bad_placement> 
     push r3

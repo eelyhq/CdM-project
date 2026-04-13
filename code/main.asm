@@ -34,7 +34,7 @@ generate_enemy_ships: ext
 # include player_ships.asm
 player_ships_replacement: ext
 
-# include game.asm
+# include game/game.asm
 game: ext
 
 # include write_tty.asm
