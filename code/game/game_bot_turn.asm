@@ -1,7 +1,6 @@
 rsect game_bot_turn
 
 # include constants.asm
-player_ship_count: ext
 bot_state: ext
 hit_start_x: ext
 hit_start_y: ext

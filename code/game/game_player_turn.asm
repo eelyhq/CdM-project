@@ -1,7 +1,6 @@
 rsect game_player_turn
 
 # include constants.asm
-bot_ship_count: ext
 board_state_fire_bot: ext
 x_hor_st: ext
 y_hor_st: ext
@@ -35,7 +34,6 @@ player_hit>
     jsr check_player_win
 
     ldi r5, 0b1000000000000 # mask
-
     ldi r4, 0xff00 # first line 
 
     ldi r1, board_state_fire_bot

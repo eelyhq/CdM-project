@@ -329,7 +329,6 @@ check_kill_or_end>
     dec r4
     stw r6, r4
 
-
     build_vertical_aoe:
     # Build the halo
     ldi r4, y_min
