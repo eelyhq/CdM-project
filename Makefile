@@ -10,14 +10,16 @@ compile:
 	code/player_ships/player_ships_vertical_commit.asm \
 	code/player_ships/player_ships.asm \
 	\
-	code/constants.asm \
-	code/function.asm \
-	code/replacement.asm \
-	code/write_tty.asm \
+	code/game/utils.asm \
 	code/game/game_kill_end.asm \
 	code/game/game_bot_turn.asm \
 	code/game/game_player_turn.asm \
 	code/game/game.asm \
+	\
+	code/constants.asm \
+	code/function.asm \
+	code/replacement.asm \
+	code/write_tty.asm \
 	code/main.asm \
 	-o build/out.img
 	@echo "Ok. File in build/out.img"
