@@ -453,23 +453,4 @@ check_kill_or_end>
     stw r0, r1
     rts
         
-
-bot_win>
-    jsr clear_tty
-    jsr write_bot
-    
-    jsr write_space
-
-    jsr write_win
-    rts
-
-player_win>
-    jsr clear_tty
-    jsr write_player
-    
-    jsr write_space
-
-    jsr write_win
-    rts
-    
 end.

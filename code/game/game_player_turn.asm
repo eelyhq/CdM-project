@@ -27,14 +27,12 @@ board_state: ext
 # include game_kill_end.asm
 check_kill_or_end: ext
 bot_hit: ext
-player_win: ext
+
+# include utils.asm
+check_player_win: ext
 
 player_hit>
-    # check bot's amount ships
-    ldi r0, bot_ship_count
-    ldw r0, r0
-    tst r0
-    beq player_win
+    jsr check_player_win
 
     ldi r5, 0b1000000000000 # mask
 

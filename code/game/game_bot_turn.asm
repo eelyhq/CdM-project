@@ -20,14 +20,12 @@ pointer_hit_arr: ext
 # include game_kill_end.asm
 check_kill_or_end: ext
 player_hit: ext
-bot_win: ext
+
+# include utils.asm
+check_bot_win: ext
 
 bot_hit>
-
-    ldi r0, player_ship_count
-    ldw r0, r0
-    tst r0
-    beq bot_win
+    jsr check_bot_win
 
     # No need to reset the retry counter anymore; go straight to bot logic
     normal_bot_flow:
@@ -272,10 +270,7 @@ bot_hit>
 
     jsr check_kill_or_end
 
-    ldi r0, player_ship_count
-    ldw r0, r0
-    tst r0
-    beq bot_win
+    jsr check_bot_win
 
     br normal_bot_flow
 
