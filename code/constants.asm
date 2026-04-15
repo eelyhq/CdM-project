@@ -21,13 +21,13 @@ player_ship_count> dc 10
 asect 0x0e16
 retry_count> dc 0
 
-asect 0x0e18
+asect 0x0e1a
 pointer_miss_matrix_arr> dc 0 # указатель на адрес матрицы с миссами
 
-asect 0x0e1a
+asect 0x0e1c
 pointer_hit_matrix_arr> dc 0 # указатель на адрес матрицы с хитами
 
-asect 0x0e1c
+asect 0x0e1e
 pointer_miss_arr> dc 0 # указатель на массив с хитами, нужен, чтобы функция провреки убийства работала и с ботом и игроком
 
 asect 0x0e20
@@ -128,7 +128,7 @@ x_ver> dc 0
 asect 0x0fb0
 y_ver> dc 0
 
-asect 0x1000  # массив с надписью Ship generation..
+asect 0x1000  # массив с надписью Ship generation...
 gen_array>
     dc "Ship generation...", 0
     

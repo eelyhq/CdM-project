@@ -282,7 +282,7 @@ bot_hit>
     beq advance_direction_no_write
     ldi r5, 2
     cmp r5, r2
-    bne end_bot_turn
+    bne normal_bot_flow
     br reverse_direction_no_write
 
     advance_direction_no_write:
@@ -368,9 +368,6 @@ bot_hit>
     shl r3, r3, 2   # Shift 2 left for bot misses (0xff40)
     stw r2, r3      # Draw on screen
 
-    br end_bot_turn
-
-    end_bot_turn:
-    br player_hit
+    rts
 
 end.

@@ -15,7 +15,6 @@ player_ship_count: ext
 bot_state: ext
 hit_start_x: ext
 hit_start_y: ext
-target_dir: ext
 board_state_miss: ext
 curr_hit_x: ext
 curr_hit_y: ext
@@ -32,6 +31,7 @@ check_player_win: ext
 
 player_hit>
     jsr check_player_win
+    ldi r0, 0
 
     ldi r5, 0b1000000000000 # mask
     ldi r4, 0xff00 # first line 
@@ -309,9 +309,8 @@ player_hit>
                 stw r3, r4 
 
                 jsr check_kill_or_end
-
-
-                br player_hit   # Return to polling (do not reset the cursor)
+                ldi r0, 1
+                rts
 
                 miss:
                     ldi r3, 0xff2a
@@ -327,6 +326,7 @@ player_hit>
                     stw r6, r4        # Store in memory
                     stw r3, r4        # Draw on screen (10-cell matrix, no shift needed)
 
-            br bot_hit
+                ldi r0, 0
+            rts
 
 end.

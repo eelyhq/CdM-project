@@ -2,9 +2,16 @@ rsect game
 
 # include constants.asm
 player_hit: ext
+bot_hit: ext
 
 game>
-    # Start the turn loop in the player phase
-    br player_hit
+    # Main game loop: player hit, bot hit... 
+    loop:
+        jsr player_hit
+        tst r0
+        bne loop  # if r0 == 0: player_hit again
+
+        jsr bot_hit
+        br loop
 
 end.
