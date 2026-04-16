@@ -9,9 +9,9 @@ game>
     loop:
         jsr player_hit
         tst r0
-        bne loop  # if r0 == 0: player_hit again
+        bne loop  # if r0 != 0: player_hit again
 
         jsr bot_hit
-        br loop
+    br loop
 
 end.
