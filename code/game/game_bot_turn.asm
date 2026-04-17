@@ -15,6 +15,7 @@ pointer_miss_matrix_arr: ext
 pointer_miss_arr: ext
 board_state_miss_bot: ext
 pointer_hit_arr: ext
+retry_count: ext         # <--- ADDED THIS BACK TO IMPORTS!
 
 # include game_kill_end.asm
 check_kill_or_end: ext
@@ -26,8 +27,38 @@ check_bot_win: ext
 bot_hit>
     jsr check_bot_win
 
-    # No need to reset the retry counter anymore; go straight to bot logic
+    # ----------------------------------------------------
+    # FIX: We MUST reset retry_count! 
+    # If we don't, the bot can get trapped in an infinite 
+    # loop bouncing between walls/misses in State 1 and 2!
+    # ----------------------------------------------------
+    ldi r0, 0
+    ldi r1, retry_count
+    stw r1, r0
+
     normal_bot_flow:
+    # ----------------------------------------------------
+    # FIX: FAIL-SAFE COUNTER
+    # If the bot checks all 4 directions and they are all 
+    # blocked, it forces state 0 to break the infinite loop.
+    # ----------------------------------------------------
+    ldi r0, retry_count
+    ldw r0, r1              
+    inc r1
+    stw r0, r1
+
+    ldi r2, 6
+    cmp r1, r2               
+    bgt force_state_0_global 
+    br continue_bot_flow
+
+    force_state_0_global:
+    ldi r2, 0
+    ldi r5, bot_state
+    stw r5, r2
+    br generate_random_cell
+
+    continue_bot_flow:
     ldi r0, bot_state
     ldw r0, r0
     tst r0 
@@ -94,40 +125,63 @@ bot_hit>
     br handle_miss_without_write   # Change direction if we hit a wall
 
     generate_random_cell:
+    
+    generate_x:
     ldi r2, 0xff82
-    ldw r2, r0 # generated x
-    ldw r2, r1 # generated y
-
-    # Take the remainder modulo 10
+    ldw r2, r0     # generated x
     ldi r2, 0x000f
-    and r2, r0, r0 # take the first 4 bits
-    and r2, r1, r1
+    and r2, r0, r0 # take the first 4 bits (0-15)
+    
     ldi r3, 10
+    cmp r3, r0     # (10 - X)
+    bgt generate_y # If 10 > X (meaning X is 0-9), X is good! Move to Y.
+    br generate_x  # If X >= 10, reroll X!
 
-    normalize_random_x:
-    cmp r3, r0
-    bgt normalize_random_y    # FIX: use strict bgt so 10 does not pass
-    sub r0, r3, r0 # subtract 10
-    br normalize_random_x
+    generate_y:
+    ldi r2, 0xff82
+    ldw r2, r1     # generated y
+    ldi r2, 0x000f
+    and r2, r1, r1 # take the first 4 bits (0-15)
+    
+    ldi r3, 10
+    cmp r3, r1     # (10 - Y)
+    bgt check_parity # If 10 > Y (meaning Y is 0-9), Y is good!
+    br generate_y  # If Y >= 10, reroll Y!
 
-    normalize_random_y:
-    cmp r3, r1
-    bgt candidate_cell_ready      # FIX: use strict bgt
-    sub r1, r3, r1 # subtract 10
-    br normalize_random_y
+    check_parity:
+    # --- 50% CHECKERBOARD STRATEGY ---
+    # Check parity: Is (X + Y) an even number?
+    add r0, r1, r2            # r2 = X + Y
+    ldi r3, 1
+    and r3, r2, r2            # r2 = (X + Y) & 1
+    tst r2
+    bne generate_random_cell  # If r2 == 1 (ODD), reroll completely!
+    
+    br candidate_cell_ready
 
-    # --- STEP RIGHT IF THE CELL IS OCCUPIED (State 0) ---
+
+    # --- STEP HOP IF THE CELL IS OCCUPIED (State 0) ---
     advance_scan_cursor:
-    inc r0              # x = x + 1
+    ldi r2, 3
+    add r0, r2, r0      # x = x + 3 
+    
     ldi r2, 10
     cmp r2, r0          # (10 - X)
-    bgt candidate_cell_ready           # FIX: if X < 10 (10-X > 0), check the cell
-    ldi r0, 0           # Otherwise (edge reached): x = 0
+    bgt candidate_cell_ready  # FIX: if 10 > X (X < 10), DO NOT change Y!
+    
+    # If X >= 10, wrap X around and increment Y
+    ldi r2, 10
+    sub r0, r2, r0      # x = x - 10
+    
     inc r1              # y = y + 1
+    
+    ldi r2, 10
     cmp r2, r1          # (10 - Y)
-    bgt candidate_cell_ready           # FIX: if y < 10, check the cell
-    ldi r1, 0           # Otherwise (end of board 9:9): y = 0
-    br candidate_cell_ready            # Check cell 0:0
+    bgt candidate_cell_ready  # if 10 > Y, check the cell
+    
+    ldi r1, 0           # Otherwise (end of board): y = 0
+    br candidate_cell_ready            
+     
 
     candidate_cell_ready:
     # --- GENERATE MASK (shared by all checks and writes) ---
@@ -356,7 +410,7 @@ bot_hit>
     ldi r2, 0xff40
     add r1, r2, r2
     add r1, r2, r2
-
+    
     ldi r5, board_state_miss
     add r1, r5, r5
     add r1, r5, r5
