@@ -33,8 +33,8 @@ player_hit>
     jsr check_player_win
     ldi r0, 0
 
-    ldi r5, 0b1000000000000 # mask
-    ldi r4, 0xff00 # first line 
+    ldi r5, 0b10000000 # mask
+    ldi r4, 0xff0a # first line 
 
     ldi r1, board_state_fire_bot
 
@@ -45,7 +45,7 @@ player_hit>
     shr r5, r5, 3
 
     # save start coords 
-    ldi r1, 0
+    ldi r1, 5
     ldi r0, x_hor_st
     stw r0, r1
     ldi r0, y_hor_st
