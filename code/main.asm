@@ -37,6 +37,8 @@ player_ships_replacement: ext
 # include game/game.asm
 game: ext
 
+draw: ext
+
 # include write_tty.asm
 clear_tty: ext
 
@@ -54,6 +56,8 @@ main>
     jsr player_ships_replacement # player ships placement
     #---------------------------------------------
 
+    jsr draw
+    
     jsr write_fight # write "fight!" in tty
     jsr game # start game
 

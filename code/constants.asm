@@ -148,4 +148,65 @@ ships_array>
 asect 0x1104
 bad_placement> 
     dc "Bad placement! Try again", 0
+
+asect 0x1140
+draw_choice> 
+    dc "Your choice: ", 0
+
+asect 0x1156
+stone> 
+    dc "stone", 0
+
+asect 0x1166
+scissors> 
+    dc "scissors", 0
+
+asect 0x1176
+paper> 
+    dc "paper", 0
+
+asect 0x1182
+confirm_message> 
+    dc " Click the check mark to confirm your choice.", 0
+
+asect 0x1200
+current_selection>
+    dc 0xffff
+
+asect 0x1202
+current_player>
+    dc 0
+
+asect 0x1204
+p1_choice>        
+    dc 0
+
+asect 0x1206
+p2_choice>         
+    dc 0
+
+asect 0x1208
+first_shooter>     
+    dc 0
+
+asect 0x120a
+msg_tie>
+    dc "Tie! Choose again."               # Length 18
+
+asect 0x1220
+msg_p1_win>
+    dc "You win! You shoot first."        # Length 25
+
+asect 0x1240
+msg_bot_win> 
+    dc "Bot wins! Bot shoots first."      # Length 27
+
+asect 0x1260
+msg_bot_chose>
+    dc "Bot: "
+
+asect 0x126a
+hello_message>
+    dc "Hello, welcome to the game Battleship. First, we'll draw lots. Choose your choice: stone, paper, or scissors."
+
 end.
