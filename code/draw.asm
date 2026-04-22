@@ -189,6 +189,7 @@ draw>
     tst r4
     bne write_paper
     ldi r6, 63
+    ldi r5, 0xffc0 
     stw r5, r6
 
     ldi r5, 0xffc0 
