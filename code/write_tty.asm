@@ -94,9 +94,10 @@ write_space>
     push r0
     push r1
 
-    ldi r0, 0xffc0
-
     ldi r1, 32   # space
+    ldi r0, 0xffc0
+    ldi r0, 0xffc0
+    
     stb r0, r1
 
     pop r1

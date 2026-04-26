@@ -15,7 +15,7 @@ pointer_miss_matrix_arr: ext
 pointer_miss_arr: ext
 board_state_miss_bot: ext
 pointer_hit_arr: ext
-retry_count: ext         # <--- ADDED THIS BACK TO IMPORTS!
+retry_count: ext      
 
 # include game_kill_end.asm
 check_kill_or_end: ext
