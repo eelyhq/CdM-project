@@ -45,5 +45,6 @@ workspace-compile:
 	code/replacement.asm \
 	code/write_tty.asm \
 	code/main.asm \
+	code/draw.asm \
 	-o ${OUT} 
 	@echo "Ok. File in ${OUT}"
