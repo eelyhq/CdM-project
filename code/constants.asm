@@ -209,4 +209,16 @@ asect 0x126a
 hello_message>
     dc "Hello, welcome to the game Battleship. First, we'll draw lots. Choose your choice: stone, paper, or scissors."
 
+asect 0x1300
+player_placement_done>
+    dc 0
+
+asect 0x1302
+player_placement_mode>   # 0 = горизонтально, 1 = вертикально
+    dc 0
+
+asect 0x1304
+enemy_generation_done>   # НОВЫЙ ФЛАГ (0 = генерируется, 1 = готово)
+    dc 0
+
 end.

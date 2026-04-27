@@ -1,64 +1,120 @@
-asect 0
-main: ext               # Declare labels
-default_handler: ext    # as external
+asect 0 
 
-# Interrupt vector table (IVT)
-# Place a vector to program start and map 
-# all internal exceptions to default_handler
-dc main, 0              # Startup/Reset vector
-dc default_handler, 0   # Unaligned SP
-dc default_handler, 0   # Unaligned PC
-dc default_handler, 0   # Invalid instruction
-dc default_handler, 0   # Double fault
-align 0x80              # Reserve space for the rest 
-                        # of IVT
+# ВОТ ЭТИ СТРОКИ ОБЯЗАТЕЛЬНЫ ДЛЯ ASECT 0 (чтобы видеть метки из RSECT)
+main: ext 
+default_handler: ext 
+button_isr: ext
 
-# Exception handlers section
+# --- Interrupt vector table (IVT) ---
+dc main, 0              # 0x00: Startup/Reset vector 
+dc default_handler, 0   # 0x04: Unaligned SP 
+dc default_handler, 0   # 0x08: Unaligned PC 
+dc default_handler, 0   # 0x0C: Invalid instruction 
+dc default_handler, 0   # 0x10: Double fault 
+
+align 0x20              # Вектор прерывания для int_vector = 0x10
+dc button_isr, 0        
+
+# --- Exception handlers section ---
 rsect exc_handlers
 
-# This handler halts processor
-default_handler>
-    halt
-# ------------
+# Зависимости для прерывания:
+player_placement_done: ext
+draw: ext
+player_placement_step: ext
 
-# Main program section
+default_handler> 
+    halt
+
+button_isr>
+    # 1. ОБЯЗАТЕЛЬНО сохраняем все регистры
+    push r0
+    push r1
+    push r2
+    push r3
+    push r4
+    push r5
+    push r6
+    push r7
+
+    # 2. Проверяем, не закончил ли игрок расстановку
+    ldi r0, player_placement_done
+    ldw r0, r0
+    tst r0
+    bnz isr_end_label
+
+
+    # 4. Читаем кнопку, двигаем координаты и рисуем превью поверх экрана
+    jsr player_placement_step 
+
+isr_end_label:
+    # 5. Восстанавливаем регистры
+    pop r7
+    pop r6
+    pop r5
+    pop r4
+    pop r3
+    pop r2
+    pop r1
+    pop r0
+    rti 
+
+# --- Main program section ---
 rsect main
 
-# include write_tty.asm
-write_ship_generation: ext
-write_fight: ext
-
-# include enemy_ships.asm
-generate_enemy_ships: ext
-
-# include player_ships.asm
-player_ships_replacement: ext
-
-# include game/game.asm
-game: ext
-
+# Зависимости для главной программы:
+player_placement_done: ext
+enemy_generation_done: ext
 draw: ext
 
-# include write_tty.asm
+write_ship_generation: ext 
+write_fight: ext
+generate_enemy_ships: ext
+player_ships_replacement_init: ext 
+game: ext
 clear_tty: ext
+refresh_placement_tty: ext
 
-main>
-    # init stack
-    ldi r0, 0x7000   
+main> 
+    ldi r0, 0x7000 
     stsp r0
 
-    # CREATE FIELDS-------------------------------
-    jsr write_ship_generation # write "Ship generation..." in tty
-    jsr generate_enemy_ships # generate enemy field
+    # Обнуляем флаги
+    ldi r0, 0
+    ldi r1, player_placement_done
+    stw r1, r0
+    ldi r1, enemy_generation_done
+    stw r1, r0
 
-    jsr clear_tty # clear tty
+    jsr player_ships_replacement_init
 
-    jsr player_ships_replacement # player ships placement
-    #---------------------------------------------
-
-    jsr draw
+    # Разрешаем прерывания
+    ei
     
-    jsr write_fight # write "fight!" in tty
-    jsr game # start game
+    # Бот генерирует корабли в фоне
+    jsr generate_enemy_ships 
+    
+    # Сюда мы попадем, когда бот закончил
+    di  
+    ldi r0, 1
+    ldi r1, enemy_generation_done
+    stw r1, r0
+    jsr refresh_placement_tty  
+    ei
+    
+wait_player_loop:
+    ldi r0, player_placement_done
+    ldw r0, r0
+    tst r0
+    bnz game_ready  
 
+    wait
+    br wait_player_loop
+
+game_ready:
+    di 
+    jsr draw
+    jsr write_fight 
+    jsr game 
+    halt
 end.
