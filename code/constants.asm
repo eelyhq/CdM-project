@@ -1,224 +1,97 @@
-# Here is constants
+asect 0x0dc0
 
-asect 0x0dc
-fight_word> dc "fight!"
+# string constants
+fight_word>               dc "fight!"
+align 2
+win_word>                 dc "win!"
+align 2
+bot_word>                 dc "bot"
+align 2
+player_word>              dc "player"
+align 2
+place_array>              dc "Place your -deck ship", 0       # array with the string place your -deck ship
+align 2
+gen_array>                dc "Ship generation...", 0          # array with the string ship generation
+align 2
+bad_placement>            dc "Bad placement! Try again", 0
+align 2
+draw_choice>              dc "Your choice: ", 0
+align 2
+stone>                    dc "stone", 0
+align 2
+scissors>                 dc "scissors", 0
+align 2
+paper>                    dc "paper", 0
+align 2
+confirm_message>          dc " Click the check mark to confirm your choice.", 0
+align 2
+msg_tie>                  dc "Tie! Choose again."             # length 18
+align 2
+msg_p1_win>               dc "You win! You shoot first."      # length 25
+align 2
+msg_bot_win>              dc "Bot wins! Bot shoots first."    # length 27
+align 2
+msg_bot_chose>            dc "Bot: "
+align 2
+hello_message>            dc "Hello, welcome to the game Battleship. First, we'll draw lots. Choose your choice: stone, paper, or scissors."
+align 2
 
-asect 0x0dd0
-win_word> dc "win!"
+# pointers
+pointer_miss_matrix_arr>  dc 0                                # pointer to the miss matrix address
+pointer_hit_matrix_arr>   dc 0                                # pointer to the hit matrix address
+pointer_miss_arr>         dc 0                                # pointer to the miss array, needed for the kill check function to work with both bot and player
+pointer_hit_arr>          dc 0                                # pointer to the hit array, needed for the kill check function to work with both bot and player
+pointer_len_ship>         dc 0
 
-asect 0x0de0
-bot_word> dc "bot"
+# game settings
+bot_ship_count>           dc 10
+player_ship_count>        dc 10
+retry_count>              dc 0
+num_player_dec>           dc 20
+num_bot_dec>              dc 20
+current_selection>        dc 0xffff
+current_player>           dc 0
+p1_choice>                dc 0
+p2_choice>                dc 0
+first_shooter>            dc 0
+prev_btn_state>           dc 0
 
-asect 0x0df0
-player_word> dc "player"
+# flags
+player_placement_done>    dc 0
+player_placement_mode>    dc 0                                # horizontal = 0, vertical = 1
+enemy_generation_done>    dc 0                                # generating = 0, ready = 1
 
-asect 0x0e0e
-bot_ship_count> dc 10
+# bot state
+bot_state>                dc 0                                # state: searches randomly = 0, found and searches for direction = 1, hits along the line = 2
+target_dir>               dc 0                                # direction: up = 0, right = 1, down = 2, left = 3
+curr_hit_x>               dc 0                                # x coordinate of the current cell we step from
+curr_hit_y>               dc 0                                # y coordinate of the current cell we step from
+hit_start_x>              dc 0                                # x coordinate of the first hit on the current ship
+hit_start_y>              dc 0                                # y coordinate of the first hit
 
-asect 0x0e12
-player_ship_count> dc 10
+# coordinates
+y_min>                    dc 0
+y_max>                    dc 0
+y_ver_fn>                 dc 0
+x_ver_st>                 dc 0                                # coordinates of the ship start point
+y_ver_st>                 dc 0
+x_hor_fn>                 dc 0                                # coordinates of the ship end point
+x_hor_st>                 dc 0                                # coordinates of the ship start point
+y_hor_st>                 dc 0
+x_ver>                    dc 0
+y_ver>                    dc 0
 
-asect 0x0e16
-retry_count> dc 0
+# arrays
+ship_mask>                dc 0, 0
+ships_array>              dc 4, 3, 3, 2, 2, 2, 1, 1, 1, 1     # array of ship sizes
 
-asect 0x0e1a
-pointer_miss_matrix_arr> dc 0 # указатель на адрес матрицы с миссами
-
-asect 0x0e1c
-pointer_hit_matrix_arr> dc 0 # указатель на адрес матрицы с хитами
-
-asect 0x0e1e
-pointer_miss_arr> dc 0 # указатель на массив с хитами, нужен, чтобы функция провреки убийства работала и с ботом и игроком
-
-asect 0x0e20
-pointer_hit_arr> dc 0 # указатель на массив с хитами, нужен, чтобы функция провреки убийства работала и с ботом и игроком
-
-asect 0x0e24
-curr_hit_x>    dc 0  # X клетки, от которой шагаем сейчас
-
-asect 0x0e26
-curr_hit_y>    dc 0  # Y клетки, от которой шагаем сейчас
-
-asect 0x0e28
-bot_state> dc 0      # 0 = Ищет (рандом), 1 = Нашел, ищет направление, 2 = Бьет по линии
-
-asect 0x0e2a
-hit_start_x> dc 0    # X первого попадания по текущему кораблю
-
-asect 0x0e2c
-hit_start_y> dc 0    # Y первого попадания
-
-asect 0x0e2e
-target_dir> dc 0     # Направление: 0-Вверх, 1-Вправо, 2-Вниз, 3-Влево
-
-asect 0x0e30
-board_state_miss> dc 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-
-asect 0x0e50
-board_state_hit> dc 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-
-asect 0x0e6c
-num_player_dec> dc 20
-
-asect 0x0e6e
-num_bot_dec> dc 20
-
-asect 0x0e70  # массив с надписью Place your -deck ship
-place_array> dc "Place your -deck ship", 0
-
-asect 0x0e90
-y_min> dc 0
-
-asect 0x0e92
-y_max> dc 0
-
-asect 0x0e94
-ship_mask> dc 0, 0
-
-asect 0x0e98
-pointer_len_ship> dc 0
-
-asect 0x0ea0
-board_state_hit_bot> 
-    dc 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-
-asect 0x0ee0
-board_state_miss_bot> 
-    dc 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-
-asect 0x0f10
-board_state_fire_bot> 
-    dc 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-
-asect 0x0f40
-board_state_bot> 
-    dc 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-
-asect 0x0f70
-board_state> 
-    dc 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-
-asect 0x0fa0
-prev_btn_state> dc 0
-
-asect 0x0fa2
-y_ver_fn> dc 0
-
-# координаты начальной точки корабля
-asect 0x0fa4
-x_ver_st> dc 0
-
-asect 0x0fa6
-y_ver_st> dc 0
-
-# координаты конечной точки корабля
-asect 0x0fa8
-x_hor_fn> dc 0
-
-# координаты начальной точки корабля
-asect 0x0faa
-x_hor_st> dc 0
-
-asect 0x0fac
-y_hor_st> dc 0
-
-asect 0x0fae
-x_ver> dc 0
-
-asect 0x0fb0
-y_ver> dc 0
-
-asect 0x1000  # массив с надписью Ship generation...
-gen_array>
-    dc "Ship generation...", 0
-    
-asect 0x10ef  # массив с размерами кораблей
-ships_array>
-    dc 4
-    dc 3
-    dc 3
-    dc 2
-    dc 2
-    dc 2
-    dc 1
-    dc 1
-    dc 1
-    dc 1
-
-asect 0x1104
-bad_placement> 
-    dc "Bad placement! Try again", 0
-
-asect 0x1140
-draw_choice> 
-    dc "Your choice: ", 0
-
-asect 0x1156
-stone> 
-    dc "stone", 0
-
-asect 0x1166
-scissors> 
-    dc "scissors", 0
-
-asect 0x1176
-paper> 
-    dc "paper", 0
-
-asect 0x1182
-confirm_message> 
-    dc " Click the check mark to confirm your choice.", 0
-
-asect 0x1200
-current_selection>
-    dc 0xffff
-
-asect 0x1202
-current_player>
-    dc 0
-
-asect 0x1204
-p1_choice>        
-    dc 0
-
-asect 0x1206
-p2_choice>         
-    dc 0
-
-asect 0x1208
-first_shooter>     
-    dc 0
-
-asect 0x120a
-msg_tie>
-    dc "Tie! Choose again."               # Length 18
-
-asect 0x1220
-msg_p1_win>
-    dc "You win! You shoot first."        # Length 25
-
-asect 0x1240
-msg_bot_win> 
-    dc "Bot wins! Bot shoots first."      # Length 27
-
-asect 0x1260
-msg_bot_chose>
-    dc "Bot: "
-
-asect 0x126a
-hello_message>
-    dc "Hello, welcome to the game Battleship. First, we'll draw lots. Choose your choice: stone, paper, or scissors."
-
-asect 0x1300
-player_placement_done>
-    dc 0
-
-asect 0x1302
-player_placement_mode>   # 0 = горизонтально, 1 = вертикально
-    dc 0
-
-asect 0x1304
-enemy_generation_done>   # НОВЫЙ ФЛАГ (0 = генерируется, 1 = готово)
-    dc 0
+# board states
+board_state_miss>         dc 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+board_state_hit>          dc 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+board_state_hit_bot>      dc 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+board_state_miss_bot>     dc 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+board_state_fire_bot>     dc 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+board_state_bot>          dc 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+board_state>              dc 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
 
 end.

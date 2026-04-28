@@ -6,22 +6,25 @@ board_state_bot: ext
 # include replacement.asm
 check_field: ext
 
-# Try to place a vertical ship of size r4.
-# On success returns r0 = 0, on failure returns r0 = 1.
+# try to place a vertical ship of size r4
+# on success returns r0 = 0, on failure returns r0 = 1
+# try to place a vertical ship of size r4
+# on success returns r0 = 0, on failure returns r0 = 1
 enemy_ship_try_vertical>
     # r5: X coord 
     # r6: Y coord
-    # r2 size of ship
+    # r2: size of ship
     push r6
+    push r2      # <--- СОХРАНЯЕМ ДЛИНУ КОРАБЛЯ В СТЕК
 
-    # Reject ships that run past the bottom edge.
+    # reject ships that run beside the bottom edge
     move r2, r4   # r4 = r2 - ship len
     ldi r0, 10
     add r6, r4, r2  # r2 = Y + len
     cmp r2, r0
-    bgt enemy_ship_vert_fail
+    bgt enemy_ship_vert_fail # it means, that ship lower then low border
 
-    # Check each segment and validate vertical ship.
+    # check each segment and validate vertical ship
     move r4, r7 # len ship
 
     enemy_ship_try_vertical_loop:
@@ -37,7 +40,8 @@ enemy_ship_try_vertical>
         br enemy_ship_try_vertical_loop
 
     enemy_ship_vert_success:
-        # Restore the original Y and place the ship.
+        # restore the original Y and place the ship
+        pop r4       # <--- ДОСТАЕМ ЦЕЛУЮ ДЛИНУ КОРАБЛЯ В r4 ПЕРЕД ОТРИСОВКОЙ!
         pop r0
         move r0, r6
         jsr enemy_ship_place_vertical
@@ -45,26 +49,28 @@ enemy_ship_try_vertical>
         rts
 
     enemy_ship_vert_fail:
+        pop r4       # <--- Очищаем стек от длины при провале
         pop r0
         ldi r0, 1
         rts
 
-# Try to place a horizontal ship of size r4.
-# On success returns r0 = 0, on failure returns r0 = 1.
+# try to place a horizontal ship of size r4
+# on success returns r0 = 0, on failure returns r0 = 1
 enemy_ship_try_horizontal>
     # r5: X coord 
     # r6: Y coord
-    # r2 size of ship
+    # r2: size of ship
     push r5
+    push r2      # <--- СОХРАНЯЕМ ДЛИНУ КОРАБЛЯ В СТЕК
 
-    # Reject ships that would run past the right edge.
+    # reject ships that would run beside the right edge
     move r2, r4
     ldi r0, 10
     add r5, r4, r2
     cmp r2, r0
     bgt enemy_ship_try_horizontal_fail
 
-    # Walk through each segment and validate the whole horizontal ship.
+    # walk through each segment and validate the whole horizontal ship
     move r4, r7
 
     enemy_ship_try_horizontal_loop:
@@ -81,6 +87,7 @@ enemy_ship_try_horizontal>
 
     enemy_ship_try_horizontal_success:
         # Restore the original X and place the ship.
+        pop r4       # <--- ДОСТАЕМ ЦЕЛУЮ ДЛИНУ КОРАБЛЯ В r4 ПЕРЕД ОТРИСОВКОЙ!
         pop r0
         move r0, r5
         jsr enemy_ship_place_horizontal
@@ -88,12 +95,13 @@ enemy_ship_try_horizontal>
         rts
 
     enemy_ship_try_horizontal_fail:
+        pop r4       # <--- Очищаем стек от длины при провале
         pop r0
         ldi r0, 1
         rts
 
 # helpers func  
-# Load the board row for the current Y coordinate into r0.
+# load the board row for the current Y coordinate into r0
 enemy_ship_load_row:
     ldi r0, board_state_bot
     add r0, r6, r0    # r6 - Y coord
@@ -101,7 +109,7 @@ enemy_ship_load_row:
     ldw r0, r0
     rts
 
-# Check one cell on the bot board using X in r5 and Y in r6.
+# check one cell on the bot board using X in r5 and Y in r6
 enemy_ship_check_current_cell:
     # r5 - X 
     # r6 - Y
@@ -113,7 +121,7 @@ enemy_ship_check_current_cell:
     jsr check_field
     rts
 
-# Validate the current ship segment and all neighboring cells.
+# validate the current ship segment and all neighboring cells
 enemy_ship_check_segment:
     # r5 - X 
     # r6 - Y
@@ -253,11 +261,11 @@ enemy_ship_check_segment:
         ldi r0, 1
         rts
 
-# Build a bit mask for the current X coordinate.
+# build a bit mask for the current X coordinate
 enemy_ship_build_mask_from_x:
     push r3
 
-    # Bit mask 
+    # bit mask 
     ldi r2, 0b1000000000
     move r5, r3
 
@@ -275,9 +283,9 @@ enemy_ship_build_mask_from_x:
         pop r3
         rts
 
-# Set the current cell bit in board_state_bot.
+# set the current cell bit in board_state_bot
 enemy_ship_write_current_cell:
-    # Load the row, build the mask, and store the updated row back.
+    # load the row, build the mask, and store the updated row back
     jsr enemy_ship_load_row
     jsr enemy_ship_build_mask_from_x
     or r0, r2, r2
@@ -288,7 +296,7 @@ enemy_ship_write_current_cell:
     stw r0, r2
     rts
 
-# Write a vertical ship from the current start point.
+# write a vertical ship from the current start point
 enemy_ship_place_vertical:
     # r7 - ship length 
     move r4, r7
@@ -297,7 +305,7 @@ enemy_ship_place_vertical:
         tst r7
         bz enemy_ship_place_vertical_done
 
-        # Write one segment, then move one row down.
+        # write one segment, then move one row down
         jsr enemy_ship_write_current_cell
 
         dec r7
@@ -307,7 +315,7 @@ enemy_ship_place_vertical:
     enemy_ship_place_vertical_done:
         rts
 
-# Write a horizontal ship from the current start point.
+# write a horizontal ship from the current start point
 enemy_ship_place_horizontal:
     # r7 - ship length 
     move r4, r7
@@ -316,7 +324,7 @@ enemy_ship_place_horizontal:
         tst r7
         bz enemy_ship_place_horizontal_done
 
-        # Write one segment, then move one column right.
+        # write one segment, then move one column right
         jsr enemy_ship_write_current_cell
 
         dec r7

@@ -27,21 +27,11 @@ check_bot_win: ext
 bot_hit>
     jsr check_bot_win
 
-    # ----------------------------------------------------
-    # FIX: We MUST reset retry_count! 
-    # If we don't, the bot can get trapped in an infinite 
-    # loop bouncing between walls/misses in State 1 and 2!
-    # ----------------------------------------------------
     ldi r0, 0
     ldi r1, retry_count
     stw r1, r0
 
     normal_bot_flow:
-    # ----------------------------------------------------
-    # FIX: FAIL-SAFE COUNTER
-    # If the bot checks all 4 directions and they are all 
-    # blocked, it forces state 0 to break the infinite loop.
-    # ----------------------------------------------------
     ldi r0, retry_count
     ldw r0, r1              
     inc r1
@@ -134,8 +124,8 @@ bot_hit>
     
     ldi r3, 10
     cmp r3, r0     # (10 - X)
-    bgt generate_y # If 10 > X (meaning X is 0-9), X is good! Move to Y.
-    br generate_x  # If X >= 10, reroll X!
+    bgt generate_y # If 10 > X (meaning X is 0-9), X is good, move to Y
+    br generate_x  # If X >= 10, reroll X
 
     generate_y:
     ldi r2, 0xff82
@@ -149,27 +139,26 @@ bot_hit>
     br generate_y  # If Y >= 10, reroll Y!
 
     check_parity:
-    # --- 50% CHECKERBOARD STRATEGY ---
-    # Check parity: Is (X + Y) an even number?
+    # check parity: is (X + Y) an even number?
     add r0, r1, r2            # r2 = X + Y
     ldi r3, 1
     and r3, r2, r2            # r2 = (X + Y) & 1
     tst r2
-    bne generate_random_cell  # If r2 == 1 (ODD), reroll completely!
+    bne generate_random_cell  # if r2 == 1 (ODD), reroll completely
     
     br candidate_cell_ready
 
 
-    # --- STEP HOP IF THE CELL IS OCCUPIED (State 0) ---
+    # if cell already occupied
     advance_scan_cursor:
     ldi r2, 3
     add r0, r2, r0      # x = x + 3 
     
     ldi r2, 10
     cmp r2, r0          # (10 - X)
-    bgt candidate_cell_ready  # FIX: if 10 > X (X < 10), DO NOT change Y!
+    bgt candidate_cell_ready  
     
-    # If X >= 10, wrap X around and increment Y
+    # if X >= 10, wrap X around and increment Y
     ldi r2, 10
     sub r0, r2, r0      # x = x - 10
     
@@ -179,12 +168,12 @@ bot_hit>
     cmp r2, r1          # (10 - Y)
     bgt candidate_cell_ready  # if 10 > Y, check the cell
     
-    ldi r1, 0           # Otherwise (end of board): y = 0
+    ldi r1, 0           # otherwise (end of board): y = 0
     br candidate_cell_ready            
      
 
     candidate_cell_ready:
-    # --- GENERATE MASK (shared by all checks and writes) ---
+    # generate mask
     ldi r4, 0b1000000000
     move r0, r3 # r3 = X coordinate
     build_fire_mask:
@@ -194,9 +183,9 @@ bot_hit>
     dec r3
     br build_fire_mask
     build_fire_mask_done:
-    # Now r4 contains the ideal shot mask
+    # now r4 contains the ideal shot mask
 
-    # Check misses
+    # check misses
     ldi r2, board_state_miss
     add r1, r2, r2
     add r1, r2, r2
@@ -205,12 +194,12 @@ bot_hit>
     tst r3
     beq check_hit_arr   # If 0 -> no miss here, check hits
 
-    # If we already shot here (miss):
+    # if we already shot here (miss):
     ldi r2, bot_state
     ldw r2, r2
     tst r2
-    beq advance_scan_cursor  # State 0 -> move right!
-    br handle_miss_without_write   # State 1/2 -> change direction
+    beq advance_scan_cursor  # state 0 -> move right
+    br handle_miss_without_write   # state 1/2 -> change direction
 
     check_hit_arr:
     ldi r2, board_state_hit
@@ -219,19 +208,19 @@ bot_hit>
     ldw r2, r3 
     and r4, r3, r3 # mask & hit row
     tst r3
-    beq candidate_has_ship           # If 0 -> the cell is completely clean
+    beq candidate_has_ship           # if 0 -> the cell is completely clean
 
-    # IF WE ALREADY HIT HERE:
+    # if bot already shot there
     ldi r2, bot_state
     ldw r2, r2
     tst r2
-    beq advance_scan_cursor  # State 0 -> move right!
+    beq advance_scan_cursor  # state 0 -> move right
 
     ldi r3, 1
     cmp r2, r3
-    beq handle_miss_without_write  # State 1 -> direction blocked, change it
+    beq handle_miss_without_write  #sState 1 -> direction blocked, change it
 
-    # State 2 -> Skip already destroyed cell!
+    # state 2 -> skip already destroyed cell
     ldi r3, curr_hit_x
     stw r3, r0
     ldi r3, curr_hit_y
@@ -245,10 +234,10 @@ bot_hit>
     ldw r2, r3 
     and r4, r3, r3 # mask & ships
     tst r3
-    beq handle_miss           # No ship -> write miss!
+    beq handle_miss           # no ship -> write miss
 
     hit2:
-    # --- UPDATE BOT STATE ---
+    # updaete bot state
     ldi r2, bot_state
     ldw r2, r2
 
@@ -280,7 +269,7 @@ bot_hit>
     ldi r3, curr_hit_y
     stw r3, r1
 
-    # --- WRITE HIT TO SCREEN (mask is already ready in r4) ---
+    # write hit to screen
     ldi r2, 0xff56
     add r1, r2, r2
     add r1, r2, r2     
@@ -289,21 +278,21 @@ bot_hit>
     add r1, r5, r5
     add r1, r5, r5
 
-    ldw r5, r6      # Read previous hits
+    ldw r5, r6      # read previous hits
     or r4, r6, r6   # r6 = previous hits | new mask (r4)
-    stw r5, r6      # Store back to memory
+    stw r5, r6      # store back to memory
 
-    move r4, r5     # IMPORTANT: put the mask in r5 for check_kill_or_end
-    move r6, r3     # Put the whole row in r3 for the screen
-    shl r3, r3, 3   # Shift for matrix 8086
-    stw r2, r3      # Draw the hit on screen
+    move r4, r5     # put the mask in r5 for check_kill_or_end
+    move r6, r3     # put the whole row in r3 for the screen
+    shl r3, r3, 3   # shift for matrix 8086
+    stw r2, r3      # draw the hit on screen
 
-    # Swap X and Y before kill check (the function expects r0=Y, r1=X)
+    # swap X and Y before kill check (the function expects r0=Y, r1=X)
     move r0, r4
     move r1, r0
     move r4, r1
 
-    # Check whether the ship was killed
+    # check whether the ship was killed
     ldi r2, board_state
 
     ldi r3, pointer_hit_matrix_arr
@@ -325,9 +314,13 @@ bot_hit>
 
     jsr check_bot_win
 
+    ldi r0, 0
+    ldi r1, retry_count
+    stw r1, r0
+
     br normal_bot_flow
 
-    # --- LOGIC FOR "DEAD-END" MISSES ---
+    # miss in 1 or 2 state, when bot tries to shoot beside the border or in already shooted cell
     handle_miss_without_write:
     ldi r2, bot_state
     ldw r2, r2
@@ -367,7 +360,7 @@ bot_hit>
     stw r6, r5
     br normal_bot_flow  
 
-    # --- LOGIC FOR NORMAL MISSES ---
+    # normal miss
     handle_miss:
     ldi r2, bot_state
     ldw r2, r2
@@ -406,7 +399,7 @@ bot_hit>
     stw r2, r5
 
     write_miss_record:
-    # Write miss
+    # write miss
     ldi r2, 0xff40
     add r1, r2, r2
     add r1, r2, r2
@@ -419,8 +412,8 @@ bot_hit>
     or r4, r6, r3   # r3 = previous misses | mask (r4)
     stw r5, r3      # store in memory
 
-    shl r3, r3, 2   # Shift 2 left for bot misses (0xff40)
-    stw r2, r3      # Draw on screen
+    shl r3, r3, 2   # shift 2 left for bot misses (0xff40)
+    stw r2, r3      # draw on screen
 
     rts
 

@@ -25,7 +25,7 @@ write_ship_generation: ext
 prev_btn_state: ext
 
 # ==========================================
-# ИНИЦИАЛИЗАЦИЯ (Вызывается один раз из main)
+# initialize, called once, from main
 # ==========================================
 player_ships_replacement_init>
     ldi r0, ships_array
@@ -40,36 +40,35 @@ player_ships_replacement_init>
     rts
 
 # ==========================================
-# СПАВН СЛЕДУЮЩЕГО КОРАБЛЯ
+# spawn ship
 # ==========================================
 spawn_current_ship>
     ldi r0, pointer_len_ship
     ldw r0, r0
-    ldb r0, r0      # r0 = размер корабля
+    ldb r0, r0      # r0 = size of ship
     tst r0
     bnz continue_spawn
     
-    # Если корабли кончились
+    # if ships run out
     ldi r0, 1
     ldi r1, player_placement_done
     stw r1, r0
-    jsr clear_tty   # Полностью очищаем TTY перед началом боя
+    jsr clear_tty  
     ldi r0, enemy_generation_done
     ldw r0, r0 
     tst r0
-    beq write_ship_generation
+    beq write_ship_generation # if bot doesn't finished ship generating, write corresponding inscription
     rts
 
 continue_spawn:
-    # Вызываем нашу новую умную отрисовку TTY
     jsr refresh_placement_tty
 
-    # Сброс режима на горизонтальный
+    # reset ship to horizontal mode
     ldi r0, 0
     ldi r1, player_placement_mode
     stw r1, r0
 
-    # Сброс координат на (0, 0)
+    # reset coordinates
     ldi r0, 0
     ldi r1, x_hor_st
     stw r1, r0
@@ -80,14 +79,14 @@ continue_spawn:
     rts
 
 # ==========================================
-# УМНАЯ ОТРИСОВКА TTY
+# writing to TTY
 # ==========================================
 refresh_placement_tty>
     push r0
     
     jsr clear_tty
     
-    # 1. Проверяем, генерируется ли еще враг
+    # check, are the bot's ships generated
     ldi r0, enemy_generation_done
     ldw r0, r0
     tst r0
@@ -97,7 +96,7 @@ refresh_placement_tty>
     jsr print_newline
     
 skip_gen_msg:
-    # 2. Проверяем, расставляет ли еще игрок корабли
+    # check, are the player's ships placed
     ldi r0, player_placement_done
     ldw r0, r0
     tst r0
@@ -110,46 +109,47 @@ skip_place_msg:
     rts
 
 # ==========================================
-# ШАГ ИГРОКА (Вызывается из прерывания на 1 такт)
+# player's ship movement
 # ==========================================
 player_placement_step> 
     ldi r0, 0xff80 
-    ldb r0, r2       # Читаем кнопку (r2 = текущее нажатие)
+    ldb r0, r2       # read button to r2
 
-    # --- Детектор фронта ---
-    # Важно: обновляем состояние ДО проверок, чтобы отжатие (0) тоже записалось!
+    # --- front detector ----------------------------
     ldi r0, prev_btn_state
-    ldb r0, r1       # r1 = старое состояние
-    stb r0, r2       # Сохраняем текущее в prev_btn_state
+    ldb r0, r1       # r1 = previous pushed button
+    stb r0, r2       # save current button to prev_btn_state
     
     not r1, r1
-    and r2, r1, r2   # r2 = только новые нажатия (текущее & ~старое)
+    and r2, r1, r2   # r2 = curr and ~prev
     tst r2
-    bz exit_step     # Если новых нажатий нет - выходим
+    bz exit_step     # if prev button = curr -> exit 
     # ---------------------------------------------------
 
+    # read placement mode
     ldi r0, player_placement_mode 
     ldw r0, r0 
     tst r0 
     bz hor_mode 
 
-    jsr handle_ver 
+    jsr handle_ver # if ver mode
+
 exit_step:
     rts 
 
 hor_mode: 
-    jsr handle_hor 
+    jsr handle_hor # if hor mode
     rts
 
 # ==========================================
-# ЛОГИКА ДВИЖЕНИЯ: ГОРИЗОНТАЛЬНАЯ
+# movement logic (horizontal)
 # ==========================================
 handle_hor:
     ldi r6, pointer_len_ship
     ldw r6, r6
-    ldb r6, r6      # r6 = размер
+    ldb r6, r6      # r6 = size of ship
 
-    # --- Влево ---
+    # --- left ---
     ldi r3, 1
     and r2, r3, r4
     bz check_up_hor
@@ -163,7 +163,7 @@ handle_hor:
     br redraw_hor
 
 check_up_hor:
-    # --- Вверх ---
+    # --- up ---
     ldi r3, 2
     and r2, r3, r4
     bz check_right_hor
@@ -177,23 +177,23 @@ check_up_hor:
     br redraw_hor
 
 check_right_hor:
-    # --- Вправо ---
+    # --- right ---
     ldi r3, 4
     and r2, r3, r4
     bz check_down_hor
     ldi r0, x_hor_st
     ldw r0, r0
-    add r0, r6, r4  # r4 = x + size
+    add r0, r6, r4  # r4 = x + size = right ship cell
     ldi r5, 10
     cmp r4, r5
-    bge redraw_hor # граница 9
+    bge redraw_hor # border = 9
     inc r0
     ldi r1, x_hor_st
     stw r1, r0
     br redraw_hor
 
 check_down_hor:
-    # --- Вниз ---
+    # --- down ---
     ldi r3, 8
     and r2, r3, r4
     bz check_reverse_hor
@@ -208,10 +208,22 @@ check_down_hor:
     br redraw_hor
 
 check_reverse_hor:
-    # --- Поворот ---
+    # --- reverse ---
     ldi r3, 16
     and r2, r3, r4
     bz check_place_hor
+
+    # check for exit beyond border
+    ldi r0, y_hor_st
+    ldw r0, r0
+    ldi r6, pointer_len_ship
+    ldw r6, r6
+    ldb r6, r6      # r6 = size
+    add r0, r6, r4  # r4 = y + size
+    ldi r5, 10
+    cmp r4, r5
+    bgt redraw_hor
+
     ldi r0, 1
     ldi r1, player_placement_mode
     stw r1, r0
@@ -227,31 +239,31 @@ check_reverse_hor:
     rts
 
 check_place_hor:
-    # --- Установка (Commit) ---
+    # --- commit ---
     ldi r3, 32
     and r2, r3, r4
     bz redraw_hor
 
-    jsr get_hor_mask  # r1 = маска
+    jsr get_hor_mask  # r1 = mask
     ldi r0, y_hor_st
     ldw r0, r0
     jsr check_placement
     tst r2
-    bnz bad_placement_hor
+    bnz bad_placement_hor # if player can't place ship -> write corresponding inscription
     
-    # Успешно! Пишем в board_state
+    # success! write to board_state
     jsr get_hor_mask
     ldi r0, y_hor_st
     ldw r0, r0
     ldi r3, board_state
     add r0, r3, r3
-    add r0, r3, r3    # r3 теперь указывает на адрес board_state[y]
+    add r0, r3, r3    # r3 = board_state[y]
     
-    ldw r3, r4        # r4 = текущее состояние строки board_state[y]
-    or r4, r1, r4     # r4 = строка | маска нового корабля
-    stw r3, r4        # сохраняем строку обратно в board_state[y]
+    ldw r3, r4        # r4 = current state of board_state[y]
+    or r4, r1, r4     # r4 = row | mask new ship
+    stw r3, r4        # save row to  board_state[y] (in such way, we add ship in board_state array)
     
-    # Сдвиг указателя на след корабль
+    # shift pointer to new ship
     ldi r0, pointer_len_ship
     ldw r0, r1
     inc r1
@@ -263,19 +275,20 @@ check_place_hor:
 
 bad_placement_hor:
     jsr write_bad_placement
+
 redraw_hor:
     jsr draw_preview_hor
     rts
 
 # ==========================================
-# ЛОГИКА ДВИЖЕНИЯ: ВЕРТИКАЛЬНАЯ
+# movement logic (vertical)
 # ==========================================
 handle_ver:
     ldi r6, pointer_len_ship
     ldw r6, r6
-    ldb r6, r6      # r6 = размер
+    ldb r6, r6      # r6 = size of ship
 
-    # --- Влево ---
+    # --- left ---
     ldi r3, 1
     and r2, r3, r4
     bz check_up_ver
@@ -289,7 +302,7 @@ handle_ver:
     br redraw_ver
 
 check_up_ver:
-    # --- Вверх ---
+    # --- up ---
     ldi r3, 2
     and r2, r3, r4
     bz check_right_ver
@@ -303,7 +316,7 @@ check_up_ver:
     br redraw_ver
 
 check_right_ver:
-    # --- Вправо ---
+    # --- right ---
     ldi r3, 4
     and r2, r3, r4
     bz check_down_ver
@@ -318,13 +331,13 @@ check_right_ver:
     br redraw_ver
 
 check_down_ver:
-    # --- Вниз ---
+    # --- down ---
     ldi r3, 8
     and r2, r3, r4
     bz check_reverse_ver
     ldi r0, y_ver_st
     ldw r0, r0
-    add r0, r6, r4  # y + size
+    add r0, r6, r4  # y + size = lower ship cell. it needed to prevent ship movement beyond the borders
     ldi r5, 10
     cmp r4, r5
     bge redraw_ver
@@ -334,14 +347,26 @@ check_down_ver:
     br redraw_ver
 
 check_reverse_ver:
-    # --- Поворот ---
+    # --- reverse ---
     ldi r3, 16
     and r2, r3, r4
     bz check_place_ver
-    ldi r0, 0
-    ldi r1, player_placement_mode
-    stw r1, r0
+
+    # check for exit beyond border
     ldi r0, x_ver_st
+    ldw r0, r0
+    ldi r6, pointer_len_ship
+    ldw r6, r6
+    ldb r6, r6      # r6 = size
+    add r0, r6, r4  # r4 = x + size
+    ldi r5, 10
+    cmp r4, r5
+    bgt redraw_ver 
+
+    ldi r0, 0
+    ldi r1, player_placement_mode # change mode to horizontal
+    stw r1, r0
+    ldi r0, x_ver_st # copy coordinates 
     ldw r0, r0
     ldi r1, x_hor_st
     stw r1, r0
@@ -353,7 +378,7 @@ check_reverse_ver:
     rts
 
 check_place_ver:
-    # --- Установка (Commit) ---
+    # --- commit ---
     ldi r3, 32
     and r2, r3, r4
     bz redraw_ver
@@ -362,9 +387,9 @@ check_place_ver:
     push r1
     ldi r0, y_ver_st
     ldw r0, r0
-    ldi r4, 0       # Накопитель ошибок
+    ldi r4, 0       # mistakes collector
     
-ver_check_loop:
+ver_check_loop: # we need to check all ships cells, because they situated in different rows
     push r0
     push r1
     push r6
@@ -378,31 +403,31 @@ ver_check_loop:
     bne ver_check_loop
     
     pop r1
-    tst r4
+    tst r4 # if r4 != 0, consequently, player can't place ship there
     bnz bad_placement_ver
     
-    # Успешно! Пишем в board_state
+    # success! write to board_state
     ldi r6, pointer_len_ship
     ldw r6, r6
     ldb r6, r6
     ldi r0, y_ver_st
     ldw r0, r0
     
-ver_commit_loop:
+ver_commit_loop: # save ship in board state array
     move r0, r3
     shl r3, r3, 1
     ldi r4, board_state
-    add r4, r3, r3    # r3 теперь указывает на адрес board_state[y]
+    add r4, r3, r3    # r3 pointed on board_state[y]
     
-    ldw r3, r5        # r5 = текущее состояние строки board_state[y]
-    or r5, r1, r5     # r5 = строка | маска нового корабля
-    stw r3, r5        # сохраняем строку обратно в board_state[y]
+    ldw r3, r5        # r5 = current state of  board_state[y]
+    or r5, r1, r5     # r5 = rorw | mask of new ship
+    stw r3, r5        # save new ship in board_state[y]
     
     inc r0
     dec r6
     bne ver_commit_loop
     
-    # Сдвиг указателя
+    # shift pointer to next ship length
     ldi r0, pointer_len_ship
     ldw r0, r2
     inc r2
@@ -419,26 +444,26 @@ redraw_ver:
     rts
 
 # ==========================================
-# ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ (Маски и Отрисовка)
+# auxiliary functions
 # ==========================================
 
-get_hor_mask: 
+get_hor_mask: # for horizontal ship
     ldi r6, pointer_len_ship 
     ldw r6, r6 
     ldb r6, r6 
     ldi r7, 0 
     ldi r3, 0b1000000000 
-mask_loop: 
+mask_loop: # make ships cell based on it's size
     or r3, r7, r7 
     shr r7, r7, 1 
     dec r6 
     bne mask_loop 
-    shl r7, r7, 1 
+    shl r7, r7, 1 # return one extra shift
     ldi r0, x_hor_st 
     ldw r0, r0 
     tst r0 
     bz mask_done 
-shift_loop: 
+shift_loop: # shift ship to correct x coordinate 
     shr r7, r7, 1 
     dec r0 
     bne shift_loop 
@@ -446,7 +471,7 @@ mask_done:
     move r7, r1 
     rts
 
-get_ver_mask: 
+get_ver_mask: # for vertical ship
     ldi r7, 0b1000000000 
     ldi r0, x_ver_st 
     ldw r0, r0 
@@ -460,7 +485,7 @@ v_mask_done:
     move r7, r1 
     rts
 
-# Универсальный покадровый рендер (без шлейфов и багов с наложениями)
+# matrix render
 draw_preview_hor:
 draw_preview_ver:
     push r0
@@ -471,37 +496,37 @@ draw_preview_ver:
     push r5
     push r6
 
-    # ШАГ 1: Полностью очищаем поле, отрисовывая чистое состояние (board_state)
-    ldi r0, 0          # Индекс строки y = 0
+    # full clear matrix 
+    ldi r0, 0          #  y = 0
 clean_matrix_loop:
     move r0, r2
-    shl r2, r2, 1      # r2 = y * 2 (смещение для слова)
+    shl r2, r2, 1      # r2 = y * 2 
 
     ldi r3, board_state
     add r3, r2, r3
     ldw r3, r3         # r3 = board_state[y]
 
-    ldi r4, 0xff6a     # Базовый порт матрицы игрока
+    ldi r4, 0xff6a     # player matrix with ships
     add r4, r2, r4
-    stw r4, r3         # Восстанавливаем чистую строку в матрице
+    stw r4, r3         # clear row
 
     inc r0
     ldi r5, 10
     cmp r0, r5
     blt clean_matrix_loop
 
-    # ШАГ 2: Определяем текущий режим и накладываем превью корабля
+    # define ship orientation 
     ldi r0, player_placement_mode
     ldw r0, r0
     tst r0
     bz draw_h_overlay
 
 draw_v_overlay:
-    # Отрисовка вертикального превью
+    # draw vertical ship
     jsr get_ver_mask
     ldi r6, pointer_len_ship 
     ldw r6, r6 
-    ldb r6, r6         # r6 = размер
+    ldb r6, r6         # r6 = size 
     ldi r0, y_ver_st 
     ldw r0, r0 
 v_overlay_loop: 
@@ -523,7 +548,7 @@ v_overlay_loop:
     br finish_draw
 
 draw_h_overlay:
-    # Отрисовка горизонтального превью
+    # draw horizontal ship
     jsr get_hor_mask 
     ldi r0, y_hor_st 
     ldw r0, r0 

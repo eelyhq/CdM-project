@@ -226,6 +226,12 @@ check_kill_or_end>
     skip_horizontal_matrix_shift_1:
     stw r1, r2 # draw on screen
 
+    push r5
+    ldi r5, 9
+    cmp r0, r5
+    pop r5
+    bge skip_horizontal_bottom # Если корабль на 9-й строке, ореол вниз не рисуем!
+
     inc r4 # paint below the ship
     inc r4
     inc r1
@@ -248,12 +254,19 @@ check_kill_or_end>
     skip_horizontal_matrix_shift_2:
     stw r1, r2 # draw on screen
 
+    # Возвращаем указатели обратно на строку корабля
+    dec r4
+    dec r4
+    dec r1
+    dec r1
+
+    skip_horizontal_bottom:
+
+    tst r0
+    beq skip_horizontal_top # Если корабль на 0-й строке, ореол вверх не рисуем!
+
     dec r4 # paint above the ship
     dec r4
-    dec r4 
-    dec r4
-    dec r1
-    dec r1
     dec r1
     dec r1
 
@@ -274,6 +287,7 @@ check_kill_or_end>
     skip_horizontal_matrix_shift_3:
     stw r1, r2 # draw on screen
 
+    skip_horizontal_top:
     br cleanup_and_return
 
     vertical_kill_check:
@@ -350,6 +364,9 @@ check_kill_or_end>
     add r1, r4, r1
     add r1, r4, r1
 
+    tst r4 # r4 - это y_min
+    beq skip_vertical_top
+
     # Build halo one cell above
     dec r7
     dec r7
@@ -372,10 +389,13 @@ check_kill_or_end>
     stw r1, r2 # draw on screen
     stw r7, r3 # RAM: halo one cell above
 
+    # Возвращаем указатели обратно на y_min
     inc r7 
     inc r7
     inc r1 
     inc r1
+
+    skip_vertical_top:
 
     ldw r7, r2 # state of the current cell (y_min)
     or r2, r5, r3 # merge
@@ -424,6 +444,12 @@ check_kill_or_end>
     br scan_vertical_body
 
     single_cell_ship:
+    push r5
+    ldi r5, 9
+    cmp r6, r5 # r6 - y_max
+    pop r5
+    bge skip_vertical_bottom
+
     inc r7 
     inc r7
     inc r1 
@@ -445,6 +471,8 @@ check_kill_or_end>
     skip_vertical_matrix_shift_4:
     stw r1, r2 # draw on screen
     stw r7, r3 # RAM
+
+    skip_vertical_bottom:
 
     cleanup_and_return:
     ldi r0, ship_mask

@@ -88,7 +88,7 @@ player_hit>
             ldi r2, x_hor_st
             stw r2, r3  
 
-            # Redraw
+            # redraw
             ldi r0, y_hor_st
             ldw r0, r0
             ldi r1, board_state_fire_bot
@@ -96,10 +96,10 @@ player_hit>
             add r1, r0, r1
             ldw r1, r1      # r1 = bg
 
-            shl r5, r5, 1   # Move left 
-            move r1, r7     # Copy background 
+            shl r5, r5, 1   # move left 
+            move r1, r7     # copy background 
             or r5, r7, r7   # r7 = bg + cursor
-            shl r7, r7, 3   # Shift every bit by 3 bits for matrix 0xff00
+            shl r7, r7, 3   # shift every bit by 3 bits for matrix
             stw r4, r7      
             br check_button_fire
 
@@ -120,11 +120,11 @@ player_hit>
             ldi r0, board_state_fire_bot
             add r0, r3, r0
             add r0, r3, r0
-            ldw r0, r7      # Get the clean background from the old row
-            shl r7, r7, 3   # Shift for matrix 8070
-            stw r4, r7      # Draw the clean background (erase the cursor)
+            ldw r0, r7      # get the clean background from the old row
+            shl r7, r7, 3   # shift for matrix
+            stw r4, r7      # draw the clean background (erase the cursor)
 
-            # 2. Update coordinates and screen pointer
+            # 2. update coordinates and screen pointer
             dec r3
             ldi r2, y_hor_st
             stw r2, r3      # Save the new Y
@@ -137,7 +137,7 @@ player_hit>
             add r0, r3, r0
             ldw r0, r7      # r7 = new row background
             or r5, r7, r7   # Add the cursor
-            shl r7, r7, 3   # Shift for matrix 8070
+            shl r7, r7, 3   # Shift for matrix
             stw r4, r7      # Draw on screen
             br check_button_fire
 
@@ -166,11 +166,11 @@ player_hit>
             add r1, r0, r1
             ldw r1, r1      # r1 = background
 
-            shr r5, r5, 1   # Move the cursor right
+            shr r5, r5, 1   # move the cursor right
             move r1, r7
-            or r5, r7, r7   # Merge background and cursor
-            shl r7, r7, 3   # Shift by 3 for screen 8070
-            stw r4, r7      # Draw
+            or r5, r7, r7   # merge background and cursor
+            shl r7, r7, 3   # shift by 3 for screen
+            stw r4, r7      # draw
             br check_button_fire
 
         check_down_fire:
@@ -186,7 +186,7 @@ player_hit>
             cmp r2, r3
             beq check_button_fire
 
-            #  Erase the cursor from the old row
+            #  erase the cursor from the old row
             ldi r0, board_state_fire_bot
             add r0, r3, r0
             add r0, r3, r0
@@ -194,14 +194,14 @@ player_hit>
             shl r7, r7, 3   
             stw r4, r7      
 
-            # Update coordinates 
+            # update coordinates 
             inc r3
             ldi r2, y_hor_st
-            stw r2, r3      # Save the new Y
+            stw r2, r3      # save the new Y
             inc r4
             inc r4          
 
-            # Draw cursor on the new row
+            # draw cursor on the new row
             ldi r0, board_state_fire_bot
             add r0, r3, r0
             add r0, r3, r0
@@ -239,7 +239,6 @@ player_hit>
             and r0, r5, r0
             tst r0
             bne check_button_fire
-            # -------
 
             ldi r0, x_hor_st   # r0 - x
             ldw r0, r0
@@ -249,7 +248,7 @@ player_hit>
             ldi r2, board_state_bot
             add r2, r1, r2
             add r2, r1, r2
-            ldw r2, r2        # Load the bot row (row = board_state_bot[y])
+            ldw r2, r2        # load the bot row (row = board_state_bot[y])
 
             # shift to x
             tst r0
@@ -265,7 +264,7 @@ player_hit>
             stw r4, r0
 
             ldi r0, 0b1000000000
-            and r0, r2, r0    # HIT CHECK (sets the Z flag)
+            and r0, r2, r0    # hit check
             
             beq miss          # if there is no ship (Z=1), jump to miss
 
@@ -279,14 +278,14 @@ player_hit>
                 add r6, r7, r6
                 add r6, r7, r6    # r6 = hit memory addess
 
-                ldw r6, r4        # Read previous hits from memory
-                or r4, r5, r4     # Overlay the new hit (using the standard mask r5)
-                stw r6, r4        # Store back to memory
+                ldw r6, r4        # read previous hits from memory
+                or r4, r5, r4     # overlay the new hit (using the standard mask r5)
+                stw r6, r4        # store back to memory
 
-                shl r4, r4, 2     # Shift the whole row 2 left for matrix 
-                stw r3, r4        # Draw on the hit matrix
+                shl r4, r4, 2     # shift the whole row 2 left for matrix 
+                stw r3, r4        # draw on the hit matrix
 
-                # Check for kill / game end
+                # check for kill / game end
                 ldi r0, y_hor_st
                 ldw r0, r0
                 ldi r1, x_hor_st
@@ -321,10 +320,10 @@ player_hit>
                     add r6, r7, r6
                     add r6, r7, r6
 
-                    ldw r6, r4        # Read previous misses
-                    or r4, r5, r4     # Add the new one
-                    stw r6, r4        # Store in memory
-                    stw r3, r4        # Draw on screen (10-cell matrix, no shift needed)
+                    ldw r6, r4        # read previous misses
+                    or r4, r5, r4     # add the new one
+                    stw r6, r4        # store in memory
+                    stw r3, r4        # draw on screen (10-cell matrix, no shift needed)
 
                 ldi r0, 0
             rts

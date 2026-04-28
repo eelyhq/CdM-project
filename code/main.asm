@@ -1,6 +1,5 @@
 asect 0 
 
-# ВОТ ЭТИ СТРОКИ ОБЯЗАТЕЛЬНЫ ДЛЯ ASECT 0 (чтобы видеть метки из RSECT)
 main: ext 
 default_handler: ext 
 button_isr: ext
@@ -12,13 +11,13 @@ dc default_handler, 0   # 0x08: Unaligned PC
 dc default_handler, 0   # 0x0C: Invalid instruction 
 dc default_handler, 0   # 0x10: Double fault 
 
-align 0x20              # Вектор прерывания для int_vector = 0x10
+align 0x20              #  Interrupt vector
 dc button_isr, 0        
 
 # --- Exception handlers section ---
 rsect exc_handlers
 
-# Зависимости для прерывания:
+# dependencies for Interrupt:
 player_placement_done: ext
 draw: ext
 player_placement_step: ext
@@ -27,7 +26,6 @@ default_handler>
     halt
 
 button_isr>
-    # 1. ОБЯЗАТЕЛЬНО сохраняем все регистры
     push r0
     push r1
     push r2
@@ -37,18 +35,16 @@ button_isr>
     push r6
     push r7
 
-    # 2. Проверяем, не закончил ли игрок расстановку
+    # checking, did the player place all the ships
     ldi r0, player_placement_done
     ldw r0, r0
     tst r0
     bnz isr_end_label
 
-
-    # 4. Читаем кнопку, двигаем координаты и рисуем превью поверх экрана
+    # do movement or placeing player ship
     jsr player_placement_step 
 
 isr_end_label:
-    # 5. Восстанавливаем регистры
     pop r7
     pop r6
     pop r5
@@ -62,7 +58,7 @@ isr_end_label:
 # --- Main program section ---
 rsect main
 
-# Зависимости для главной программы:
+# dependencies for main program:
 player_placement_done: ext
 enemy_generation_done: ext
 draw: ext
@@ -79,7 +75,7 @@ main>
     ldi r0, 0x7000 
     stsp r0
 
-    # Обнуляем флаги
+    # reset flags
     ldi r0, 0
     ldi r1, player_placement_done
     stw r1, r0
@@ -88,29 +84,32 @@ main>
 
     jsr player_ships_replacement_init
 
-    # Разрешаем прерывания
+    # enable Interrupts
     ei
     
-    # Бот генерирует корабли в фоне
+    # bot generates ships in the background
     jsr generate_enemy_ships 
     
-    # Сюда мы попадем, когда бот закончил
+    # go there, when bot placed all ships
     di  
     ldi r0, 1
     ldi r1, enemy_generation_done
     stw r1, r0
     jsr refresh_placement_tty  
     ei
-    
+
+# waiting for player place all his ships
 wait_player_loop:
     ldi r0, player_placement_done
     ldw r0, r0
     tst r0
     bnz game_ready  
 
+    # if player doesn't place ships yet, wait interrupt
     wait
     br wait_player_loop
 
+# main game
 game_ready:
     di 
     jsr draw

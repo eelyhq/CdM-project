@@ -99,11 +99,11 @@ write_bad_placement>
     push r2
     push r3
 
-    # Восстанавливаем базовые надписи и переходим на новую строку
+    # restore base inscription and go to new line
     jsr refresh_placement_tty
     jsr print_newline
 
-    # Печатаем ошибку
+    # print error
     ldi r0, 0xffc0    
     ldi r1, bad_placement 
     ldi r3, 24        
@@ -122,7 +122,6 @@ write_bad_placement_loop:
     rts
 
 print_place_your_ship>
-    # Сохраняем все регистры, делаем функцию независимой
     push r0
     push r1
     push r2
@@ -131,7 +130,7 @@ print_place_your_ship>
     
     ldi r6, pointer_len_ship
     ldw r6, r6
-    ldb r6, r6      # Получаем текущий размер корабля
+    ldb r6, r6      # get  current ship size
 
     ldi r0, place_array
     ldi r1, 11
@@ -166,7 +165,6 @@ print_place_text_second:  # print "-deck ship"
     rts
 
 write_ship_generation>
-    # УБРАНА очистка tty (clear_tty) отсюда
     push r0
     push r1
     push r2
@@ -211,11 +209,10 @@ clear_tty>
     rts
 
 print_newline>
-    # НОВАЯ ФУНКЦИЯ: перенос строки
     push r0
     push r1
     ldi r0, 0xffc0
-    ldi r1, 10      # ASCII-код переноса строки (\n)
+    ldi r1, 10      # ASCII \n
     stb r0, r1
     pop r1
     pop r0
