@@ -254,7 +254,6 @@ check_kill_or_end>
     skip_horizontal_matrix_shift_2:
     stw r1, r2 # draw on screen
 
-    # Возвращаем указатели обратно на строку корабля
     dec r4
     dec r4
     dec r1

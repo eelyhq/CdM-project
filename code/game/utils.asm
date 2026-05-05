@@ -18,7 +18,7 @@ check_player_win>
     ldi r0, bot_ship_count
     ldw r0, r0
     tst r0 
-    bne player_not_win  # if bot_sips_count == 0: player_win;
+    bne player_not_win  # if bot_sips_count == 0: player_win
     
     # if win
     jsr player_win

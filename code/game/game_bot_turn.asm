@@ -148,7 +148,6 @@ bot_hit>
     
     br candidate_cell_ready
 
-
     # if cell already occupied
     advance_scan_cursor:
     ldi r2, 3
@@ -194,7 +193,7 @@ bot_hit>
     tst r3
     beq check_hit_arr   # If 0 -> no miss here, check hits
 
-    # if we already shot here (miss):
+    # if bot already shot here (miss):
     ldi r2, bot_state
     ldw r2, r2
     tst r2

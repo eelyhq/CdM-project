@@ -66,6 +66,7 @@ write_win>
     push r2
     push r3
     ldi r0, 0xffc0
+    ldi r0, 0xffc0
     ldi r2, 4
     ldi r1, win_word
 write_bot_win_label:

@@ -15,7 +15,7 @@ enemy_ship_try_vertical>
     # r6: Y coord
     # r2: size of ship
     push r6
-    push r2      # <--- СОХРАНЯЕМ ДЛИНУ КОРАБЛЯ В СТЕК
+    push r2    
 
     # reject ships that run beside the bottom edge
     move r2, r4   # r4 = r2 - ship len
@@ -41,7 +41,7 @@ enemy_ship_try_vertical>
 
     enemy_ship_vert_success:
         # restore the original Y and place the ship
-        pop r4       # <--- ДОСТАЕМ ЦЕЛУЮ ДЛИНУ КОРАБЛЯ В r4 ПЕРЕД ОТРИСОВКОЙ!
+        pop r4       
         pop r0
         move r0, r6
         jsr enemy_ship_place_vertical
@@ -49,7 +49,7 @@ enemy_ship_try_vertical>
         rts
 
     enemy_ship_vert_fail:
-        pop r4       # <--- Очищаем стек от длины при провале
+        pop r4      
         pop r0
         ldi r0, 1
         rts
@@ -61,7 +61,7 @@ enemy_ship_try_horizontal>
     # r6: Y coord
     # r2: size of ship
     push r5
-    push r2      # <--- СОХРАНЯЕМ ДЛИНУ КОРАБЛЯ В СТЕК
+    push r2     
 
     # reject ships that would run beside the right edge
     move r2, r4
@@ -87,7 +87,7 @@ enemy_ship_try_horizontal>
 
     enemy_ship_try_horizontal_success:
         # Restore the original X and place the ship.
-        pop r4       # <--- ДОСТАЕМ ЦЕЛУЮ ДЛИНУ КОРАБЛЯ В r4 ПЕРЕД ОТРИСОВКОЙ!
+        pop r4       
         pop r0
         move r0, r5
         jsr enemy_ship_place_horizontal
@@ -95,7 +95,7 @@ enemy_ship_try_horizontal>
         rts
 
     enemy_ship_try_horizontal_fail:
-        pop r4       # <--- Очищаем стек от длины при провале
+        pop r4      
         pop r0
         ldi r0, 1
         rts
