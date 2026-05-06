@@ -7,8 +7,6 @@ board_state_bot: ext
 # include enemy_ships_helpers.asm
 enemy_ship_try_vertical: ext
 enemy_ship_try_horizontal: ext
-
-# include function.asm
 rand: ext
 exit: ext
 

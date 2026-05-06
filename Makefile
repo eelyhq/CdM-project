@@ -35,7 +35,6 @@ workspace-compile:
 	code/game/game.asm \
 	\
 	code/constants.asm \
-	code/function.asm \
 	code/replacement.asm \
 	code/write_tty.asm \
 	code/main.asm \
