@@ -72,7 +72,7 @@ clear_tty: ext
 refresh_placement_tty: ext
 
 main> 
-    ldi r0, 0x7000 
+    ldi r0, 0xFEFE
     stsp r0
 
     # reset flags
