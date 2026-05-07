@@ -26,12 +26,12 @@ check_kill_or_end>
     # r1 = ship x coordinate
     # r2 = ship state array
 
-    # Check whether the ship is horizontal
+    # check whether the ship is horizontal
     add r0, r2, r4
     add r0, r4, r4
     ldw r4, r4 # ship state
 
-    # Find the left boundary
+    # find the left boundary
     ldi r3, 0 # number of left shifts
 
     left:
@@ -51,7 +51,7 @@ check_kill_or_end>
     inc r3 # increase shift count
     br left
 
-    # Find the right boundary
+    # find the right boundary
     left_scan_done:
     restore_left_shift: # restore shift
     tst r3 
@@ -65,7 +65,6 @@ check_kill_or_end>
     ldi r6, 9 # edge check
     cmp r1, r6
     bgt right_scan_done # no more cells to the right
-
     and r4, r5, r6 # r6 = ship exists in this cell
     tst r6
     beq right_scan_done # no ship in this cell
@@ -88,7 +87,7 @@ check_kill_or_end>
     br restore_right_shift
     restore_right_shift_done:
 
-    # Check whether the ship is horizontal; if so, ship_mask has more than one bit
+    # check whether the ship is horizontal; if so, ship_mask has more than one bit
     ldi r3, ship_mask
     ldw r3, r3
 
@@ -97,10 +96,10 @@ check_kill_or_end>
     cmp r3, r5
     bne horizontal_kill_check # ship is vertical, so check for kill
 
-    # Check vertical or single-cell ship
+    # check vertical or single-cell ship
     ldi r3, 0 # number of upward shifts
 
-    # Find the upper boundary
+    # find the upper boundary
     up:
     tst r0
     blt up_scan_done
@@ -169,7 +168,7 @@ check_kill_or_end>
     cmp r4, r3 # if not equal, the ship is not yet sunk
     bne cleanup_and_return
 
-    # Ship is sunk; if this was the bot's turn, reset its state to 0
+    # ship is sunk; if this was the bot's turn, reset its state to 0
     ldi r1, pointer_hit_matrix_arr
     ldw r1, r1
     ldi r4, 0xff56
@@ -222,7 +221,7 @@ check_kill_or_end>
     cmp r5, r6
     pop r6
     bne skip_horizontal_matrix_shift_1
-    shl r2, r2, 2  # Shift by 2 if this is the bot matrix (80a2)
+    shl r2, r2, 2  # shift by 2 if this is the bot matrix 
     skip_horizontal_matrix_shift_1:
     stw r1, r2 # draw on screen
 
@@ -230,7 +229,7 @@ check_kill_or_end>
     ldi r5, 9
     cmp r0, r5
     pop r5
-    bge skip_horizontal_bottom # Если корабль на 9-й строке, ореол вниз не рисуем!
+    bge skip_horizontal_bottom 
 
     inc r4 # paint below the ship
     inc r4
@@ -262,7 +261,7 @@ check_kill_or_end>
     skip_horizontal_bottom:
 
     tst r0
-    beq skip_horizontal_top # Если корабль на 0-й строке, ореол вверх не рисуем!
+    beq skip_horizontal_top 
 
     dec r4 # paint above the ship
     dec r4
@@ -290,7 +289,7 @@ check_kill_or_end>
     br cleanup_and_return
 
     vertical_kill_check:
-    # Check whether the ship is killed
+    # check whether the ship is killed
     ldi r4, y_min
     ldw r4, r4
     ldi r6, y_max
@@ -318,7 +317,7 @@ check_kill_or_end>
     br scan_vertical_cells
 
     mark_ship_as_sunk:
-    # Ship is sunk; if this was the bot's turn, reset its state to 0
+    # ship is sunk; if this was the bot's turn, reset its state to 0
     ldi r4, pointer_hit_matrix_arr
     ldw r4, r4
     ldi r6, 0xff56
@@ -334,7 +333,7 @@ check_kill_or_end>
     ldi r4, 0
     stw r6, r4
 
-    br build_vertical_aoe       # IMPORTANT FIX: do not decrement the bot again
+    br build_vertical_aoe      
 
     dec_count_ship_bot2:
     ldi r6, bot_ship_count # decrement bot ship count
@@ -366,7 +365,7 @@ check_kill_or_end>
     tst r4 # r4 - это y_min
     beq skip_vertical_top
 
-    # Build halo one cell above
+    # build halo one cell above
     dec r7
     dec r7
     dec r1
@@ -383,12 +382,11 @@ check_kill_or_end>
     cmp r0, r6
     pop r6
     bne skip_vertical_matrix_shift_1
-    shl r2, r2, 2  # Shift by 2 if this is the bot matrix (80a2)
+    shl r2, r2, 2  # shift by 2 if this is the bot matrix
     skip_vertical_matrix_shift_1:
     stw r1, r2 # draw on screen
     stw r7, r3 # RAM: halo one cell above
 
-    # Возвращаем указатели обратно на y_min
     inc r7 
     inc r7
     inc r1 
