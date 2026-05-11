@@ -23,7 +23,12 @@ compile:
 	@echo "Ok. File in ./build/out.img"
 
 workspace-compile: 
-	@mkdir -p $(dir ${OUT})
+	@if [ -z "$(OUT)" ]; then \
+		echo "You should create OUT env variable in .env. Example: OUT=./out"; \
+		exit 1; \
+	fi
+
+	@mkdir -p "$(OUT)"
 	@cocas \
 	./code/enemy_ships/enemy_ships_helpers.asm \
 	./code/enemy_ships/enemy_ships.asm \
@@ -41,5 +46,5 @@ workspace-compile:
 	./code/write_tty.asm \
 	./code/main.asm \
 	./code/draw.asm \
-	-o ${OUT} 
-	@echo "Ok. File in ${OUT}"
+	-o "$(OUT)/out.img"
+	@echo "Ok. File in $(OUT)/out.img"
