@@ -91,12 +91,10 @@ main>
     jsr generate_enemy_ships 
     
     # go there, when bot placed all ships
-    di  
     ldi r0, 1
     ldi r1, enemy_generation_done
     stw r1, r0
     jsr refresh_placement_tty  
-    ei
 
 # waiting for player place all his ships
 wait_player_loop:
