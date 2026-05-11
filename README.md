@@ -1,3 +1,16 @@
-# CdM-project-
-make compile чтобы скомпилить, файл будет в ./build/out.img
-Есть еще make workspace-compile, это команда позволяет скомпилировать файл в удобную директорию. Нужно создать .env (есть пример .env.example). OUT это переменная окружения, в которую надо записать директорию в которую нужно скомпилировать проект. Далее make workspace-compile. Итоговый файл будет в директории OUT
+# CdM Project
+## Build
+
+To compile the project and generate the image in `build/out.img`, run:
+
+```bash
+make compile
+```
+
+If you want to compile the image into a custom directory, create a `.env` (there is .env.example file) file with an `OUT` variable and run:
+
+```bash
+make workspace-compile
+```
+
+The final image will be written to the directory specified in `OUT`.
