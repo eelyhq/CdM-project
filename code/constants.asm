@@ -2,39 +2,22 @@ asect 0x0dc0
 
 # string constants
 fight_word>               dc "fight!"
-align 2
 win_word>                 dc "win!"
-align 2
 bot_word>                 dc "bot"
-align 2
 player_word>              dc "player"
-align 2
 place_array>              dc "Place your -deck ship", 0       # array with the string place your -deck ship
-align 2
 gen_array>                dc "Ship generation...", 0          # array with the string ship generation
-align 2
 bad_placement>            dc "Bad placement! Try again", 0
-align 2
 draw_choice>              dc "Your choice: ", 0
-align 2
 stone>                    dc "stone", 0
-align 2
 scissors>                 dc "scissors", 0
-align 2
 paper>                    dc "paper", 0
-align 2
 confirm_message>          dc " Click the check mark to confirm your choice.", 0
-align 2
 msg_tie>                  dc "Tie! Choose again."             # length 18
-align 2
 msg_p1_win>               dc "You win! You shoot first."      # length 25
-align 2
 msg_bot_win>              dc "Bot wins! Bot shoots first."    # length 27
-align 2
 msg_bot_chose>            dc "Bot: "
-align 2
 hello_message>            dc "Hello, welcome to the game Battleship. First, we'll draw lots. Choose your choice: stone, paper, or scissors."
-align 2
 
 # pointers
 pointer_miss_matrix_arr>  dc 0                                # pointer to the miss matrix address
