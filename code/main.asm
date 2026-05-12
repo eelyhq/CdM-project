@@ -38,7 +38,7 @@ button_isr>
     # checking, did the player place all the ships
     ldi r0, player_placement_done
     ldw r0, r0
-    tst r0
+    tst r0  
     bnz isr_end_label
 
     # do movement or placeing player ship
@@ -95,7 +95,7 @@ main>
     ldi r1, enemy_generation_done
     stw r1, r0
     jsr refresh_placement_tty  
-
+    
 # waiting for player place all his ships
 wait_player_loop:
     ldi r0, player_placement_done
